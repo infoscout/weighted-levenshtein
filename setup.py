@@ -3,5 +3,5 @@ from Cython.Build import cythonize
 
 setup(
     name='clev',
-    ext_modules=cythonize("src/clev.pyx"),
+    ext_modules=cythonize("weighted_levenshtein/src/clev.pyx"),
 )
