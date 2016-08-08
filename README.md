@@ -22,7 +22,9 @@ TODO: ReadTheDocs link here
 
 ## Wikipedia links
 Levenshtein distance: https://en.wikipedia.org/wiki/Levenshtein_distance and https://en.wikipedia.org/wiki/Wagner%E2%80%93Fischer_algorithm
+
 Optimal String Alignment: https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance#Optimal_string_alignment_distance
+
 Damerau-Levenshtein distance: https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance#Distance_with_adjacent_transpositions
 
 
