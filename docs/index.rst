@@ -15,12 +15,3 @@ Contents:
 .. autofunction:: clev.optimal_string_alignment
 .. autofunction:: clev.damerau_levenshtein
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
