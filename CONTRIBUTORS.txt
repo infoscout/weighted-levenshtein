@@ -1,0 +1,14 @@
+# Contributions to the weighted-levenshtein project
+
+## Creator
+
+* David Su <dysu1995@gmail.com>, GitHub: dsu1995
+
+## Maintainer
+
+* David Su and InfoScout <oss@infoscoutinc.com>
+
+
+## Contributors
+
+In chronological order:
