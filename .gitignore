@@ -2,4 +2,6 @@
 *.so
 build/*
 *.pyc
-
+docs/_build/doctrees/*
+MANIFEST
+venv/*

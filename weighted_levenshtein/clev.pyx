@@ -1,5 +1,5 @@
 #!python
-#cython: language_level=2, boundscheck=False, wraparound=False
+#cython: language_level=2, boundscheck=False, wraparound=False, embedsignature=True
 
 from libc.stdlib cimport malloc, free
 
@@ -148,43 +148,46 @@ cdef inline unsigned char str_1_get(unsigned char* s, Py_ssize_t i) nogil:
 def damerau_levenshtein(
     unsigned char* str1,
     unsigned char* str2,
-    DTYPE_t[::1] insert_weights=None,
-    DTYPE_t[::1] delete_weights=None,
-    DTYPE_t[:,::1] substitute_weights=None,
-    DTYPE_t[:,::1] transpose_weights=None):
+    DTYPE_t[::1] insert_costs=None,
+    DTYPE_t[::1] delete_costs=None,
+    DTYPE_t[:,::1] substitute_costs=None,
+    DTYPE_t[:,::1] transpose_costs=None):
     """
     Calculates the Damerau-Levenshtein distance between str1 and str2,
-    provided the costs of inserting, deleting, substituting, and transposing characters
+    provided the costs of inserting, deleting, substituting, and transposing characters.
+    The costs default to 1 if not provided.
+
+    For convenience, this function is aliased as clev.dam_lev().
 
     :param str str1: first string
     :param str str2: second string
-    :param DTYPE_t[::1] insert_weights: a memoryview of length ALPHABET_SIZE,
-        where insert_weights[i] is the cost of inserting ASCII character i
-    :param DTYPE_t[::1] delete_weights: a memoryview of length ALPHABET_SIZE,
-        where delete_weights[i] is the cost of deleting ASCII character i
-    :param DTYPE_t[:,::1] substitute_weights: a 2D memoryview of size (ALPHABET_SIZE, ALPHABET_SIZE),
-        where substitute_weights[i, j] is the cost of substituting ASCII character i with 
+    :param np.ndarray insert_costs: a numpy array of np.float64 (C doubles) of length 128 (0..127),
+        where insert_costs[i] is the cost of inserting ASCII character i
+    :param np.ndarray delete_costs: a numpy array of np.float64 (C doubles) of length 128 (0..127),
+        where delete_costs[i] is the cost of deleting ASCII character i
+    :param np.ndarray substitute_costs: a 2D numpy array of np.float64 (C doubles) of dimensions (128, 128),
+        where substitute_costs[i, j] is the cost of substituting ASCII character i with 
         ASCII character j
-    :param DTYPE_t[:,::1] transpose_weights: a 2D memoryview of size (ALPHABET_SIZE, ALPHABET_SIZE),
-        where transpose_weights[i, j] is the cost of transposing ASCII character i with 
+    :param np.ndarray transpose_costs: a 2D numpy array of np.float64 (C doubles) of dimensions (128, 128),
+        where transpose_costs[i, j] is the cost of transposing ASCII character i with 
         ASCII character j, where character i is followed by character j in the string
     """
-    if insert_weights is None:
-        insert_weights = unit_array
-    if delete_weights is None:
-        delete_weights = unit_array
-    if substitute_weights is None:
-        substitute_weights = unit_matrix
-    if transpose_weights is None:
-        transpose_weights = unit_matrix    
+    if insert_costs is None:
+        insert_costs = unit_array
+    if delete_costs is None:
+        delete_costs = unit_array
+    if substitute_costs is None:
+        substitute_costs = unit_matrix
+    if transpose_costs is None:
+        transpose_costs = unit_matrix    
 
     return c_damerau_levenshtein(
         str1, len(str1),
         str2, len(str2),
-        insert_weights,
-        delete_weights,
-        substitute_weights,
-        transpose_weights
+        insert_costs,
+        delete_costs,
+        substitute_costs,
+        transpose_costs
     )
 
 dam_lev = damerau_levenshtein
@@ -193,10 +196,10 @@ dam_lev = damerau_levenshtein
 cdef DTYPE_t c_damerau_levenshtein(
     unsigned char* str1, Py_ssize_t len1,
     unsigned char* str2, Py_ssize_t len2,
-    DTYPE_t[::1] insert_weights,
-    DTYPE_t[::1] delete_weights,
-    DTYPE_t[:,::1] substitute_weights,
-    DTYPE_t[:,::1] transpose_weights) nogil:
+    DTYPE_t[::1] insert_costs,
+    DTYPE_t[::1] delete_costs,
+    DTYPE_t[:,::1] substitute_costs,
+    DTYPE_t[:,::1] transpose_costs) nogil:
     """
     https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance#Distance_with_adjacent_transpositions
     """
@@ -205,7 +208,7 @@ cdef DTYPE_t c_damerau_levenshtein(
 
         Py_ssize_t i, j
         unsigned char char_i, char_j
-        DTYPE_t weight, cost, ret_val
+        DTYPE_t cost, ret_val
         Py_ssize_t db, k, l
 
         Array2D d
@@ -227,12 +230,12 @@ cdef DTYPE_t c_damerau_levenshtein(
     Array2D_n1_at(d, 0, 0)[0] = 0
     for i in range(1, len1 + 1):
         char_i = str_1_get(str1, i)
-        weight = delete_weights[char_i]
-        Array2D_n1_at(d, i, 0)[0] = Array2D_n1_get(d, i - 1, 0) + weight
+        cost = delete_costs[char_i]
+        Array2D_n1_at(d, i, 0)[0] = Array2D_n1_get(d, i - 1, 0) + cost
     for j in range(1, len2 + 1):
         char_j = str_1_get(str2, j)
-        weight = insert_weights[char_j]
-        Array2D_n1_at(d, 0, j)[0] = Array2D_n1_get(d, 0, j - 1) + weight
+        cost = insert_costs[char_j]
+        Array2D_n1_at(d, 0, j)[0] = Array2D_n1_get(d, 0, j - 1) + cost
 
     # fill DP array
     for i in range(1, len1 + 1):
@@ -248,15 +251,15 @@ cdef DTYPE_t c_damerau_levenshtein(
                 cost = 0
                 db = j
             else:
-                cost = substitute_weights[char_i, char_j]
+                cost = substitute_costs[char_i, char_j]
 
             Array2D_n1_at(d, i, j)[0] = min(
                 Array2D_n1_get(d, i - 1, j - 1) + cost,                  # equal/substitute
-                Array2D_n1_get(d, i, j - 1) + insert_weights[char_j],    # insert
-                Array2D_n1_get(d, i - 1, j) + delete_weights[char_i],    # delete
+                Array2D_n1_get(d, i, j - 1) + insert_costs[char_j],    # insert
+                Array2D_n1_get(d, i - 1, j) + delete_costs[char_i],    # delete
                 Array2D_n1_get(d, k - 1, l - 1) +                        # transpose
                     col_delete_range_cost(d, k + 1, i - 1) +                      # delete chars in between
-                    transpose_weights[str_1_get(str1, k), str_1_get(str1, i)] +   # transpose chars
+                    transpose_costs[str_1_get(str1, k), str_1_get(str1, i)] +   # transpose chars
                     row_insert_range_cost(d, l + 1, j - 1)                        # insert chars in between
             )
 
@@ -270,43 +273,46 @@ cdef DTYPE_t c_damerau_levenshtein(
 def optimal_string_alignment(
     unsigned char* str1,
     unsigned char* str2,
-    DTYPE_t[::1] insert_weights=None,
-    DTYPE_t[::1] delete_weights=None,
-    DTYPE_t[:,::1] substitute_weights=None,
-    DTYPE_t[:,::1] transpose_weights=None):
+    DTYPE_t[::1] insert_costs=None,
+    DTYPE_t[::1] delete_costs=None,
+    DTYPE_t[:,::1] substitute_costs=None,
+    DTYPE_t[:,::1] transpose_costs=None):
     """
     Calculates the Optimal String Alignment distance between str1 and str2,
-    provided the costs of inserting, deleting, and substituting characters
+    provided the costs of inserting, deleting, and substituting characters.
+    The costs default to 1 if not provided.
+
+    For convenience, this function is aliased as clev.osa().
 
     :param str str1: first string
     :param str str2: second string
-    :param DTYPE_t[::1] insert_weights: a memoryview of length ALPHABET_SIZE,
-        where insert_weights[i] is the cost of inserting ASCII character i
-    :param DTYPE_t[::1] delete_weights: a memoryview of length ALPHABET_SIZE,
-        where delete_weights[i] is the cost of deleting ASCII character i
-    :param DTYPE_t[:,::1] substitute_weights: a 2D memoryview of size (ALPHABET_SIZE, ALPHABET_SIZE),
-        where substitute_weights[i, j] is the cost of substituting ASCII character i with 
+    :param np.ndarray insert_costs: a numpy array of np.float64 (C doubles) of length 128 (0..127),
+        where insert_costs[i] is the cost of inserting ASCII character i
+    :param np.ndarray delete_costs: a numpy array of np.float64 (C doubles) of length 128 (0..127),
+        where delete_costs[i] is the cost of deleting ASCII character i
+    :param np.ndarray substitute_costs: a 2D numpy array of np.float64 (C doubles) of dimensions (128, 128),
+        where substitute_costs[i, j] is the cost of substituting ASCII character i with 
         ASCII character j
-    :param DTYPE_t[:,::1] transpose_weights: a 2D memoryview of size (ALPHABET_SIZE, ALPHABET_SIZE),
-        where transpose_weights[i, j] is the cost of transposing ASCII character i with 
+    :param np.ndarray transpose_costs: a 2D numpy array of np.float64 (C doubles) of dimensions (128, 128),
+        where transpose_costs[i, j] is the cost of transposing ASCII character i with 
         ASCII character j, where character i is followed by character j in the string
     """
-    if insert_weights is None:
-        insert_weights = unit_array
-    if delete_weights is None:
-        delete_weights = unit_array
-    if substitute_weights is None:
-        substitute_weights = unit_matrix
-    if transpose_weights is None:
-        transpose_weights = unit_matrix    
+    if insert_costs is None:
+        insert_costs = unit_array
+    if delete_costs is None:
+        delete_costs = unit_array
+    if substitute_costs is None:
+        substitute_costs = unit_matrix
+    if transpose_costs is None:
+        transpose_costs = unit_matrix    
 
     return c_optimal_string_alignment(
         str1, len(str1),
         str2, len(str2),
-        insert_weights,
-        delete_weights,
-        substitute_weights,
-        transpose_weights
+        insert_costs,
+        delete_costs,
+        substitute_costs,
+        transpose_costs
     )
 
 osa = optimal_string_alignment
@@ -315,10 +321,10 @@ osa = optimal_string_alignment
 cdef DTYPE_t c_optimal_string_alignment(
     unsigned char* str1, Py_ssize_t len1,
     unsigned char* str2, Py_ssize_t len2,
-    DTYPE_t[::1] insert_weights,
-    DTYPE_t[::1] delete_weights,
-    DTYPE_t[:,::1] substitute_weights,
-    DTYPE_t[:,::1] transpose_weights) nogil:
+    DTYPE_t[::1] insert_costs,
+    DTYPE_t[::1] delete_costs,
+    DTYPE_t[:,::1] substitute_costs,
+    DTYPE_t[:,::1] transpose_costs) nogil:
     """
     https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance#Optimal_string_alignment_distance
     """
@@ -334,10 +340,10 @@ cdef DTYPE_t c_optimal_string_alignment(
     Array2D_0_at(d, 0, 0)[0] = 0
     for i in range(1, len1 + 1):
         char_i = str_1_get(str1, i)
-        Array2D_0_at(d, i, 0)[0] = Array2D_0_get(d, i - 1, 0) + delete_weights[char_i]
+        Array2D_0_at(d, i, 0)[0] = Array2D_0_get(d, i - 1, 0) + delete_costs[char_i]
     for j in range(1, len2 + 1):
         char_j = str_1_get(str2, j) 
-        Array2D_0_at(d, 0, j)[0] = Array2D_0_get(d, 0, j - 1) + insert_weights[char_j]
+        Array2D_0_at(d, 0, j)[0] = Array2D_0_get(d, 0, j - 1) + insert_costs[char_j]
 
     # fill DP array
     for i in range(1, len1 + 1):
@@ -348,9 +354,9 @@ cdef DTYPE_t c_optimal_string_alignment(
                 Array2D_0_at(d, i, j)[0] = Array2D_0_get(d, i - 1, j - 1)
             else:
                 Array2D_0_at(d, i, j)[0] = min(
-                    Array2D_0_get(d, i - 1, j) + delete_weights[char_i],  # deletion
-                    Array2D_0_get(d, i, j - 1) + insert_weights[char_j],  # insertion
-                    Array2D_0_get(d, i - 1, j - 1) + substitute_weights[char_i, char_j]  # substitution
+                    Array2D_0_get(d, i - 1, j) + delete_costs[char_i],  # deletion
+                    Array2D_0_get(d, i, j - 1) + insert_costs[char_j],  # insertion
+                    Array2D_0_get(d, i - 1, j - 1) + substitute_costs[char_i, char_j]  # substitution
                 )
 
             if i > 1 and j > 1:
@@ -359,7 +365,7 @@ cdef DTYPE_t c_optimal_string_alignment(
                 if char_i == prev_char_j and prev_char_i == char_j:  # transpose
                     Array2D_0_at(d, i, j)[0] = min(
                         Array2D_0_get(d, i, j),
-                        Array2D_0_get(d, i - 2, j - 2) + transpose_weights[prev_char_i, char_i]
+                        Array2D_0_get(d, i - 2, j - 2) + transpose_costs[prev_char_i, char_i]
                     )
 
     ret_val = Array2D_0_get(d, len1, len2)
@@ -370,36 +376,40 @@ cdef DTYPE_t c_optimal_string_alignment(
 def levenshtein(
     unsigned char* str1,
     unsigned char* str2,
-    DTYPE_t[::1] insert_weights=None,
-    DTYPE_t[::1] delete_weights=None,
-    DTYPE_t[:,::1] substitute_weights=None):
+    DTYPE_t[::1] insert_costs=None,
+    DTYPE_t[::1] delete_costs=None,
+    DTYPE_t[:,::1] substitute_costs=None):
     """
     Calculates the Levenshtein distance between str1 and str2,
-    provided the costs of inserting, deleting, and substituting characters
+    provided the costs of inserting, deleting, and substituting characters.
+    The costs default to 1 if not provided.
+
+    For convenience, this function is aliased as clev.lev().
 
     :param str str1: first string
     :param str str2: second string
-    :param DTYPE_t[::1] insert_weights: a memoryview of length ALPHABET_SIZE,
-        where insert_weights[i] is the cost of inserting ASCII character i
-    :param DTYPE_t[::1] delete_weights: a memoryview of length ALPHABET_SIZE,
-        where delete_weights[i] is the cost of deleting ASCII character i
-    :param DTYPE_t[:,::1] substitute_weights: a 2D memoryview of size (ALPHABET_SIZE, ALPHABET_SIZE),
-        where substitute_weights[i, j] is the cost of substituting ASCII character i with 
+    :param np.ndarray insert_costs: a numpy array of np.float64 (C doubles) of length 128 (0..127),
+        where insert_costs[i] is the cost of inserting ASCII character i
+    :param np.ndarray delete_costs: a numpy array of np.float64 (C doubles) of length 128 (0..127),
+        where delete_costs[i] is the cost of deleting ASCII character i
+    :param np.ndarray substitute_costs: a 2D numpy array of np.float64 (C doubles) of dimensions (128, 128),
+        where substitute_costs[i, j] is the cost of substituting ASCII character i with 
         ASCII character j
+
     """
-    if insert_weights is None:
-        insert_weights = unit_array
-    if delete_weights is None:
-        delete_weights = unit_array
-    if substitute_weights is None:
-        substitute_weights = unit_matrix
+    if insert_costs is None:
+        insert_costs = unit_array
+    if delete_costs is None:
+        delete_costs = unit_array
+    if substitute_costs is None:
+        substitute_costs = unit_matrix
 
     return c_levenshtein(
         str1, len(str1),
         str2, len(str2),
-        insert_weights,
-        delete_weights,
-        substitute_weights
+        insert_costs,
+        delete_costs,
+        substitute_costs
     )
 
 lev = levenshtein
@@ -408,9 +418,9 @@ lev = levenshtein
 cdef DTYPE_t c_levenshtein(
     unsigned char* str1, Py_ssize_t len1,
     unsigned char* str2, Py_ssize_t len2,
-    DTYPE_t[::1] insert_weights,
-    DTYPE_t[::1] delete_weights,
-    DTYPE_t[:,::1] substitute_weights) nogil:
+    DTYPE_t[::1] insert_costs,
+    DTYPE_t[::1] delete_costs,
+    DTYPE_t[:,::1] substitute_costs) nogil:
     """
     https://en.wikipedia.org/wiki/Wagner%E2%80%93Fischer_algorithm
     """
@@ -425,10 +435,10 @@ cdef DTYPE_t c_levenshtein(
     Array2D_0_at(d, 0, 0)[0] = 0
     for i in range(1, len1 + 1):
         char_i = str_1_get(str1, i)
-        Array2D_0_at(d, i, 0)[0] = Array2D_0_get(d, i - 1, 0) + delete_weights[char_i]
+        Array2D_0_at(d, i, 0)[0] = Array2D_0_get(d, i - 1, 0) + delete_costs[char_i]
     for j in range(1, len2 + 1):
         char_j = str_1_get(str2, j)
-        Array2D_0_at(d, 0, j)[0] = Array2D_0_get(d, 0, j - 1) + insert_weights[char_j]
+        Array2D_0_at(d, 0, j)[0] = Array2D_0_get(d, 0, j - 1) + insert_costs[char_j]
     
     for i in range(1, len1 + 1):
         char_i = str_1_get(str1, i)
@@ -438,9 +448,9 @@ cdef DTYPE_t c_levenshtein(
                 Array2D_0_at(d, i, j)[0] = Array2D_0_get(d, i - 1, j - 1)
             else:
                 Array2D_0_at(d, i, j)[0] = min(
-                    Array2D_0_get(d, i - 1, j) + delete_weights[char_i],
-                    Array2D_0_get(d, i, j - 1) + insert_weights[char_j],
-                    Array2D_0_get(d, i - 1, j - 1) + substitute_weights[char_i, char_j]
+                    Array2D_0_get(d, i - 1, j) + delete_costs[char_i],
+                    Array2D_0_get(d, i, j - 1) + insert_costs[char_j],
+                    Array2D_0_get(d, i - 1, j - 1) + substitute_costs[char_i, char_j]
                 )
 
     ret_val = Array2D_0_get(d, len1, len2)

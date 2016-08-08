@@ -11,10 +11,10 @@ cdef DTYPE_t c_damerau_levenshtein(
 	Py_ssize_t len_a,
 	unsigned char* str_b,
 	Py_ssize_t len_b,
-	DTYPE_t[::1] insert_weights,
-	DTYPE_t[::1] delete_weights,
-	DTYPE_t[:,::1] substitute_weights,
-	DTYPE_t[:,::1] transpose_weights) nogil
+	DTYPE_t[::1] insert_costs,
+	DTYPE_t[::1] delete_costs,
+	DTYPE_t[:,::1] substitute_costs,
+	DTYPE_t[:,::1] transpose_costs) nogil
 
 
 cdef DTYPE_t c_optimal_string_alignment(
@@ -22,10 +22,10 @@ cdef DTYPE_t c_optimal_string_alignment(
 	Py_ssize_t m,
 	unsigned char* word_n,
 	Py_ssize_t n,
-	DTYPE_t[::1] insert_weights,
-	DTYPE_t[::1] delete_weights,
-	DTYPE_t[:,::1] substitute_weights,
-	DTYPE_t[:,::1] transpose_weights) nogil
+	DTYPE_t[::1] insert_costs,
+	DTYPE_t[::1] delete_costs,
+	DTYPE_t[:,::1] substitute_costs,
+	DTYPE_t[:,::1] transpose_costs) nogil
 
 
 cdef DTYPE_t c_levenshtein(
@@ -33,7 +33,7 @@ cdef DTYPE_t c_levenshtein(
 	Py_ssize_t m,
 	unsigned char* word_n,
 	Py_ssize_t n,
-	DTYPE_t[::1] insert_weights,
-	DTYPE_t[::1] delete_weights,
-	DTYPE_t[:,::1] substitute_weights) nogil
+	DTYPE_t[::1] insert_costs,
+	DTYPE_t[::1] delete_costs,
+	DTYPE_t[:,::1] substitute_costs) nogil
 

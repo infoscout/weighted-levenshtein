@@ -1,0 +1,2 @@
+exclude weighted_levenshtein/setup.py
+exclude weighted_levenshtein/setup.sh
