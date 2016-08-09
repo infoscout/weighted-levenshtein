@@ -1,10 +1,10 @@
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 
 import unittest
 
 import numpy as np
 
-from weighted_levenshtein.clev import levenshtein as lev, optimal_string_alignment as osa, damerau_levenshtein as dl
+from weighted_levenshtein import lev, osa, dam_lev
 
 
 class TestClev(unittest.TestCase):
@@ -21,7 +21,7 @@ class TestClev(unittest.TestCase):
         return osa(x, y, self.iw, self.dw, self.sw, self.tw)
 
     def _dl(self, x, y):
-        return dl(x, y, self.iw, self.dw, self.sw, self.tw)
+        return dam_lev(x, y, self.iw, self.dw, self.sw, self.tw)
 
     def test_lev(self):
         self.assertEqual(self._lev('1234', '1234'), 0.0)
@@ -128,7 +128,6 @@ class TestClev(unittest.TestCase):
         self.assertEqual(self._dl('ab', 'bdca'), 3)
         self.assertEqual(self._dl('bdca', 'ab'), 3)
 
-
     def test_dl_transpose(self):
         self.iw[ord('c')] = 1.9
         self.assertEqual(self._dl('ab', 'bca'), 2.9)
@@ -150,7 +149,6 @@ class TestClev(unittest.TestCase):
         self.tw[ord('b'), ord('a')] = 1.5
         self.assertEqual(self._dl('ab', 'bca'), 2)
         self.assertEqual(self._dl('bca', 'ab'), 2.5)
-
 
 
 if __name__ == '__main__':
