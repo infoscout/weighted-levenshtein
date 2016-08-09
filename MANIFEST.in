@@ -1,2 +1,3 @@
-exclude weighted_levenshtein/setup.py
-exclude weighted_levenshtein/setup.sh
+include clev.pxd
+include clev.pyx
+include clev.c

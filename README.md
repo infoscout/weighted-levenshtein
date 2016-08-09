@@ -29,13 +29,10 @@ Damerau-Levenshtein distance: https://en.wikipedia.org/wiki/Damerau%E2%80%93Leve
 
 
 
-## Compiling from Cython
-First, clone this repo. Then, run the following commands:
-```bash
-cd weighted-levenshtein/weighted_levenshtein
-./setup.sh
-```
-This will compile Cython code into a .so file that can be imported into Python.
+## Use as Cython library
+TODO
+
+
 
 ## Distribution
 

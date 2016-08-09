@@ -1,7 +1,8 @@
-*.c
 *.so
 build/*
 *.pyc
 docs/_build/doctrees/*
 MANIFEST
-venv/*
+venv*
+.idea/*
+weighted_levenshtein/build/*
