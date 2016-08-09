@@ -1,6 +1,9 @@
 weighted-levenshtein
 ====================
 
+.. image:: https://circleci.com/gh/infoscout/weighted-levenshtein.svg?style=svg
+    :target: https://circleci.com/gh/infoscout/weighted-levenshtein
+
 Installation
 ------------
 
