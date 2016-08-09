@@ -1,5 +1,5 @@
 include clev.pxd
 include clev.pyx
 include clev.c
-recursive-exclude test
+recursive-exclude test *
 
