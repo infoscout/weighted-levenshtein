@@ -109,6 +109,7 @@ For the Cython API, functions are prefixed with a ``c_`` with respect to the Pyt
 Function signatures below:
 
 .. code:: cython
+
     cdef DTYPE_t c_damerau_levenshtein(
         unsigned char* str_a,
         Py_ssize_t len_a,
