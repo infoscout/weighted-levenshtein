@@ -25,7 +25,15 @@ Usage Example
 Detailed Documentation
 ----------------------
 
-TODO: ReadTheDocs link here
+http://weighted-levenshtein.readthedocs.io/
+
+Important Notes
+---------------
+
+- The costs parameters only accept numpy arrays, since the underlying Cython implementation relies on this for fast lookups. The numpy arrays are indexed using the ``ord()`` value of the characters. Thus, only the first 128 ASCII letters are accepted, and ``dict`` and ``list`` are not accepted. Consequently, the strings must be strictly ``str`` objects, not ``unicode``. 
+
+- This library was built with only Python 2 in mind. Python 3 compatibility is untested.
+
 
 Wikipedia links
 ---------------

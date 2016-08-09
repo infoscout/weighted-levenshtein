@@ -43,9 +43,65 @@
             
   <div class="section" id="welcome-to-weighted-levenshtein-s-documentation">
 <h1>Welcome to weighted-levenshtein&#8217;s documentation!<a class="headerlink" href="#welcome-to-weighted-levenshtein-s-documentation" title="Permalink to this headline">¶</a></h1>
-<p>Contents:</p>
+</div>
+<div class="section" id="weighted-levenshtein">
+<h1>weighted-levenshtein<a class="headerlink" href="#weighted-levenshtein" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">weighted-levenshtein</span></code></p>
+</div>
+<div class="section" id="usage-example">
+<h2>Usage Example<a class="headerlink" href="#usage-example" title="Permalink to this headline">¶</a></h2>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">weighted_levenshtein</span> <span class="k">import</span> <span class="n">lev</span><span class="p">,</span> <span class="n">osa</span><span class="p">,</span> <span class="n">dam_lev</span>
+
+<span class="n">insert_costs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">128</span><span class="p">)</span>  <span class="c1"># make an array of all 1&#39;s</span>
+<span class="n">insert_costs</span><span class="p">[</span><span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;D&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.5</span>  <span class="c1"># make inserting the character &#39;D&#39; have cost 1.5 (instead of 1)</span>
+
+<span class="nb">print</span> <span class="n">lev</span><span class="p">(</span><span class="s1">&#39;BANANAS&#39;</span><span class="p">,</span> <span class="s1">&#39;BANDANAS&#39;</span><span class="p">,</span> <span class="n">insert_costs</span><span class="o">=</span><span class="n">insert_costs</span><span class="p">)</span>  <span class="c1"># prints &#39;1.5&#39;</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">lev</span></code>, <code class="docutils literal"><span class="pre">osa</span></code>, and <code class="docutils literal"><span class="pre">dam_lev</span></code> are aliases for <code class="docutils literal"><span class="pre">levenshtein</span></code>,
+<code class="docutils literal"><span class="pre">optimal_string_alignment</span></code>, and <code class="docutils literal"><span class="pre">damerau_levenshtein</span></code>, respectively.</p>
+</div>
+<div class="section" id="detailed-documentation">
+<h2>Detailed Documentation<a class="headerlink" href="#detailed-documentation" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://weighted-levenshtein.readthedocs.io/">http://weighted-levenshtein.readthedocs.io/</a></p>
+</div>
+<div class="section" id="important-notes">
+<h2>Important Notes<a class="headerlink" href="#important-notes" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>The costs parameters only accept numpy arrays, since the underlying Cython implementation relies on this for fast lookups. The numpy arrays are indexed using the <code class="docutils literal"><span class="pre">ord()</span></code> value of the characters. Thus, only the first 128 ASCII letters are accepted, and <code class="docutils literal"><span class="pre">dict</span></code> and <code class="docutils literal"><span class="pre">list</span></code> are not accepted. Consequently, the strings must be strictly <code class="docutils literal"><span class="pre">str</span></code> objects, not <code class="docutils literal"><span class="pre">unicode</span></code>.</li>
+<li>This library was built with only Python 2 in mind. Python 3 compatibility is untested.</li>
+</ul>
+</div>
+<div class="section" id="wikipedia-links">
+<h2>Wikipedia links<a class="headerlink" href="#wikipedia-links" title="Permalink to this headline">¶</a></h2>
+<p>Levenshtein distance:
+<a class="reference external" href="https://en.wikipedia.org/wiki/Levenshtein_distance">https://en.wikipedia.org/wiki/Levenshtein_distance</a> and
+<a class="reference external" href="https://en.wikipedia.org/wiki/Wagner%E2%80%93Fischer_algorithm">https://en.wikipedia.org/wiki/Wagner%E2%80%93Fischer_algorithm</a></p>
+<p>Optimal String Alignment:
+<a class="reference external" href="https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance#Optimal_string_alignment_distance">https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance#Optimal_string_alignment_distance</a></p>
+<p>Damerau-Levenshtein distance:
+<a class="reference external" href="https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance#Distance_with_adjacent_transpositions">https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance#Distance_with_adjacent_transpositions</a></p>
+</div>
+<div class="section" id="use-as-cython-library">
+<h2>Use as Cython library<a class="headerlink" href="#use-as-cython-library" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+</div>
+<div class="section" id="distribution">
+<h2>Distribution<a class="headerlink" href="#distribution" title="Permalink to this headline">¶</a></h2>
+<p>Since not every machine has Cython installed, we distribute the C code
+that was compiled from Cython. To compile to C, run <code class="docutils literal"><span class="pre">setup.sh</span></code> like
+above. Not only will it generate a .so file, it will also generate the
+.c file that can be distributed, and compiled on any machine with a C
+compiler. Consequently, the distribution on PyPI contains only the .c
+file.</p>
 <div class="toctree-wrapper compound">
 </div>
+</div>
+<div class="section" id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="weighted_levenshtein.levenshtein">
 <code class="descclassname">weighted_levenshtein.</code><code class="descname">levenshtein</code><span class="sig-paren">(</span><em>unsigned char *str1</em>, <em>unsigned char *str2</em>, <em>__Pyx_memviewslice insert_costs=None</em>, <em>__Pyx_memviewslice delete_costs=None</em>, <em>__Pyx_memviewslice substitute_costs=None</em><span class="sig-paren">)</span><a class="headerlink" href="#weighted_levenshtein.levenshtein" title="Permalink to this definition">¶</a></dt>
@@ -137,6 +193,7 @@ ASCII character j, where character i is followed by character j in the string</l
 </dd></dl>
 
 </div>
+</div>
 
 
           </div>
@@ -144,6 +201,22 @@ ASCII character j, where character i is followed by character j in the string</l
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to weighted-levenshtein&#8217;s documentation!</a></li>
+<li><a class="reference internal" href="#weighted-levenshtein">weighted-levenshtein</a><ul>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#usage-example">Usage Example</a></li>
+<li><a class="reference internal" href="#detailed-documentation">Detailed Documentation</a></li>
+<li><a class="reference internal" href="#important-notes">Important Notes</a></li>
+<li><a class="reference internal" href="#wikipedia-links">Wikipedia links</a></li>
+<li><a class="reference internal" href="#use-as-cython-library">Use as Cython library</a></li>
+<li><a class="reference internal" href="#distribution">Distribution</a></li>
+<li><a class="reference internal" href="#functions">Functions</a></li>
+</ul>
+</li>
+</ul>
+
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">

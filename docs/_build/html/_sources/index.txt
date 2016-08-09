@@ -6,10 +6,14 @@
 Welcome to weighted-levenshtein's documentation!
 ================================================
 
-Contents:
+.. include:: ../README.rst
+
 
 .. toctree::
    :maxdepth: 2
+
+Functions
+---------
 
 .. autofunction:: weighted_levenshtein.levenshtein
 .. autofunction:: weighted_levenshtein.optimal_string_alignment
