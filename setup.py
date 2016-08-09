@@ -12,7 +12,7 @@ else:
 setup(
     name='weighted_levenshtein',
     packages=['weighted_levenshtein'],  # this must be the same as the name above
-    version='0.5',  # TODO reset this back to 0.1 for official pypi
+    version='0.6',  # TODO reset this back to 0.1 for official pypi
     description='Library providing functions to calculate Levenshtein distance, Optimal String Alignment distance, '
                 'and Damerau-Levenshtein distance, where the cost of each operation can be weighted by letter.',
     # long_description = 'Weighted Levenshtein distance library. The docs can be found at readthedocs.',
