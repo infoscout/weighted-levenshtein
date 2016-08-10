@@ -4,6 +4,34 @@ weighted-levenshtein
 .. image:: https://circleci.com/gh/infoscout/weighted-levenshtein.svg?style=svg
     :target: https://circleci.com/gh/infoscout/weighted-levenshtein
 
+Use Cases
+---------
+
+Most existing Levenshtein libraries are not very flexible: all edit operations have cost 1.
+
+However, sometimes not all edits are created equal. For instance, if you are doing OCR correction, maybe substituting '0' for 'O' should have a smaller cost than substituting 'X' for 'O'. If you are doing human typo correction, maybe substituting 'X' for 'Z' should have a smaller cost, since they are located next to each other on a QWERTY keyboard. 
+
+This library supports all theses use cases, by allowing the user to specify different weights for edit operations involving every possible combination of letters. The core algorithms are written in Cython, which means they are blazing fast to run.
+
+The Levenshtein distance function supports setting different costs for inserting characters, deleting characters, and substituting characters. Thus, Levenshtein distance is well suited for detecting OCR errors.
+
+The Damerau-Levenshtein distance function supports setting different costs for inserting characters, deleting characters, substituting characters, and transposing characters. Thus, Damerau-Levenshtein distance is well suited for detecting human typos, since humans are likely to make transposition errors, while OCR is not.
+
+More Information
+----------------
+
+Levenshtein distance:
+https://en.wikipedia.org/wiki/Levenshtein\_distance and
+https://en.wikipedia.org/wiki/Wagner%E2%80%93Fischer\_algorithm
+
+Optimal String Alignment:
+https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein\_distance#Optimal\_string\_alignment\_distance
+
+Damerau-Levenshtein distance:
+https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein\_distance#Distance\_with\_adjacent\_transpositions
+
+
+
 Installation
 ------------
 
@@ -18,7 +46,7 @@ Usage Example
     from weighted_levenshtein import lev, osa, dam_lev
     
     
-    insert_costs = np.ones(128, dtype=np.float64)  # make an array of all 1's
+    insert_costs = np.ones(128, dtype=np.float64)  # make an array of all 1's of size 128, the number of ASCII characters
     insert_costs[ord('D')] = 1.5  # make inserting the character 'D' have cost 1.5 (instead of 1)
     
     # you can just specify the insertion costs
@@ -80,18 +108,6 @@ Important Notes
 - This library was built with only Python 2 in mind. Python 3 compatibility is untested.
 
 
-Wikipedia links
----------------
-
-Levenshtein distance:
-https://en.wikipedia.org/wiki/Levenshtein\_distance and
-https://en.wikipedia.org/wiki/Wagner%E2%80%93Fischer\_algorithm
-
-Optimal String Alignment:
-https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein\_distance#Optimal\_string\_alignment\_distance
-
-Damerau-Levenshtein distance:
-https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein\_distance#Distance\_with\_adjacent\_transpositions
 
 Use as Cython library
 ---------------------
@@ -143,14 +159,3 @@ Function signatures below:
         DTYPE_t[::1] insert_costs,
         DTYPE_t[::1] delete_costs,
         DTYPE_t[:,::1] substitute_costs) nogil
-
-
-Distribution
-------------
-
-Since not every machine has Cython installed, we distribute the C code
-that was compiled from Cython. To compile to C, run ``setup.sh`` like
-above. Not only will it generate a .so file, it will also generate the
-.c file that can be distributed, and compiled on any machine with a C
-compiler. Consequently, the distribution on PyPI contains only the .c
-file.
