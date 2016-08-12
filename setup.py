@@ -44,13 +44,10 @@ setup(
     keywords='Levenshtein Damerau weight weighted distance',
 
     packages=find_packages(exclude=('test', 'docs')),
-    # packages=['weighted_levenshtein'],
 
     package_data={
         'weighted_levenshtein': ['clev.pxd', 'clev.pyx']
     },
-
-    # download_url='https://github.com/peterldowns/mypackage/tarball/0.1', # I'll explain this in a second
-
+    
     ext_modules=extensions,
 )
