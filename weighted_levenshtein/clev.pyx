@@ -199,8 +199,8 @@ def damerau_levenshtein(
     if transpose_costs is None:
         transpose_costs = unit_matrix    
 
-    str1 = _to_unicode(str1)
-    str2 = _to_unicode(str2)
+    str1 = str(str1)
+    str2 = str(str2)
 
     return c_damerau_levenshtein(
         str1, len(str1),
