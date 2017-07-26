@@ -181,7 +181,10 @@ def damerau_levenshtein(
     if substitute_costs is None:
         substitute_costs = unit_matrix
     if transpose_costs is None:
-        transpose_costs = unit_matrix    
+        transpose_costs = unit_matrix  
+
+    str1 = str1.encode(u"ascii")  
+    str2 = str2.encode(u"ascii")  
 
     return c_damerau_levenshtein(
         str1, len(str1),

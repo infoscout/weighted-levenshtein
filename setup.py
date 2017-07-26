@@ -46,12 +46,7 @@ setup(
         # Setuptools 18.0 properly handles Cython extensions.
         'setuptools>=18.0',
         'cython',
-    ],    
-
-    compiler_directives={
-        'c_string_type': 'str',
-        'c_string_encoding': 'utf8'    
-    },
+    ],   
 
     ext_modules=[Extension("weighted_levenshtein.clev", ['weighted_levenshtein/clev.pyx'])],
 )
