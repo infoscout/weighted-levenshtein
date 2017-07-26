@@ -1,5 +1,5 @@
 #!python
-#cython: language_level=2, boundscheck=False, wraparound=False, embedsignature=True
+#cython: language_level=2, boundscheck=False, wraparound=False, embedsignature=True, c_string_type=str, c_string_encoding=ascii
 
 from cpython.version cimport PY_MAJOR_VERSION
 
@@ -21,22 +21,6 @@ for ii in range(ALPHABET_SIZE):
 
 
 # Begin helper functions
-
-cdef unicode _to_unicode(s):
-    """
-        Convert s to a proper unicode type, handling the differences between Python 2 and 3. This code
-        comes from http://docs.cython.org/src/tutorial/strings.html#accepting-strings-from-python-code.
-    """
-    if type(s) is unicode:
-        # fast path for most common case(s)
-        return <unicode>s
-    elif PY_MAJOR_VERSION < 3 and isinstance(s, bytes):
-        # only accept byte strings in Python 2.x, not in Py3
-        return (<bytes>s).decode('UTF-8')
-    elif isinstance(s, unicode):
-        # this works for NumPy strings
-        return unicode(s)
-    raise TypeError('string [{}] has an unrecognized type of [{}]'.format(type(s)))
 
 # Begin Array2D
 
@@ -198,9 +182,6 @@ def damerau_levenshtein(
         substitute_costs = unit_matrix
     if transpose_costs is None:
         transpose_costs = unit_matrix    
-
-    str1 = str(str1)
-    str2 = str(str2)
 
     return c_damerau_levenshtein(
         str1, len(str1),
