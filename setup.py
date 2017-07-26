@@ -50,7 +50,7 @@ setup(
 
     compiler_directives={
         'c_string_type': 'str',
-        'c_string_encoding: utf8,    
+        'c_string_encoding': 'utf8'    
     },
 
     ext_modules=[Extension("weighted_levenshtein.clev", ['weighted_levenshtein/clev.pyx'])],
