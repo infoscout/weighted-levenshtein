@@ -7,27 +7,11 @@ from libc.stdlib cimport malloc, free
 
 from clev cimport DTYPE_t, DTYPE_MAX, ALPHABET_SIZE
 
-import numpy as np # in order to initialize unit arrays as fallback
+# in order to initialize unit arrays as fallback
+import numpy as np 
 
 
 # Begin helper functions
-
-cdef unicode _to_unicode(s):
-    """
-        Convert s to a proper unicode type, handling the differences between Python 2 and 3. This code
-        comes from http://docs.cython.org/src/tutorial/strings.html#accepting-strings-from-python-code.
-    """
-    if type(s) is unicode:
-        print("uni")
-        # fast path for most common case(s)
-        return <unicode>s
-    elif PY_MAJOR_VERSION < 3 and isinstance(s, bytes):
-        # only accept byte strings in Python 2.x, not in Py3
-        return (<bytes>s).decode('UTF-8')
-    elif isinstance(s, unicode):
-        # this works for NumPy strings
-        return unicode(s)
-    raise TypeError('string [{}] has an unrecognized type of [{}]'.format(type(s)))
 
 # Begin Array2D
 
@@ -190,8 +174,8 @@ def damerau_levenshtein(
     if transpose_costs is None:
         transpose_costs = np.ones((128,128), dtype=np.float64) #unit_matrix  
 
-    s1 = _to_unicode(str1)  
-    s2 = _to_unicode(str2)  
+    s1 = str(str1).encode()  
+    s2 = str(str2).encode()  
 
     return c_damerau_levenshtein(
         s1, len(s1),
@@ -318,8 +302,8 @@ def optimal_string_alignment(
     if transpose_costs is None:
         transpose_costs = np.ones((128,128), dtype=np.float64) #unit_matrix   
 
-    s1 = _to_unicode(str1)  
-    s2 = _to_unicode(str2)   
+    s1 = str(str1).encode()  
+    s2 = str(str2).encode()   
 
     return c_optimal_string_alignment(
         s1, len(s1),
