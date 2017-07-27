@@ -1,0 +1,10 @@
+Cython/Compiler/Code.cpython-35m-darwin.so
+Cython/Compiler/FlowControl.cpython-35m-darwin.so
+Cython/Compiler/Lexicon.cpython-35m-darwin.so
+Cython/Compiler/Parsing.cpython-35m-darwin.so
+Cython/Compiler/Scanning.cpython-35m-darwin.so
+Cython/Compiler/Visitor.cpython-35m-darwin.so
+Cython/Plex/Actions.cpython-35m-darwin.so
+Cython/Plex/Scanners.cpython-35m-darwin.so
+Cython/Runtime/refnanny.cpython-35m-darwin.so
+Cython/Tempita/_tempita.cpython-35m-darwin.so

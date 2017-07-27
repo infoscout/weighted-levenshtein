@@ -7,20 +7,27 @@ from libc.stdlib cimport malloc, free
 
 from clev cimport DTYPE_t, DTYPE_MAX, ALPHABET_SIZE
 
-
-cdef size_t ii, jj
-cdef DTYPE_t unit_array[ALPHABET_SIZE]
-cdef DTYPE_t unit_matrix[ALPHABET_SIZE][ALPHABET_SIZE]
-
-for ii in range(ALPHABET_SIZE):
-    unit_array[ii] = 1
-
-for ii in range(ALPHABET_SIZE):
-    for jj in range(ALPHABET_SIZE):
-        unit_matrix[ii][jj] = 1
+import numpy as np # in order to initialize unit arrays as fallback
 
 
 # Begin helper functions
+
+cdef unicode _to_unicode(s):
+    """
+        Convert s to a proper unicode type, handling the differences between Python 2 and 3. This code
+        comes from http://docs.cython.org/src/tutorial/strings.html#accepting-strings-from-python-code.
+    """
+    if type(s) is unicode:
+        print("uni")
+        # fast path for most common case(s)
+        return <unicode>s
+    elif PY_MAJOR_VERSION < 3 and isinstance(s, bytes):
+        # only accept byte strings in Python 2.x, not in Py3
+        return (<bytes>s).decode('UTF-8')
+    elif isinstance(s, unicode):
+        # this works for NumPy strings
+        return unicode(s)
+    raise TypeError('string [{}] has an unrecognized type of [{}]'.format(type(s)))
 
 # Begin Array2D
 
@@ -175,20 +182,20 @@ def damerau_levenshtein(
         ASCII character j, where character i is followed by character j in the string
     """
     if insert_costs is None:
-        insert_costs = unit_array
+        insert_costs = np.ones(128, dtype=np.float64) #unit_matrix
     if delete_costs is None:
-        delete_costs = unit_array
+        delete_costs = np.ones(128, dtype=np.float64) #unit_matrix
     if substitute_costs is None:
-        substitute_costs = unit_matrix
+        substitute_costs = np.ones((128,128), dtype=np.float64) #unit_matrix
     if transpose_costs is None:
-        transpose_costs = unit_matrix  
+        transpose_costs = np.ones((128,128), dtype=np.float64) #unit_matrix  
 
-    str1 = str1.encode(u"ascii")  
-    str2 = str2.encode(u"ascii")  
+    s1 = _to_unicode(str1)  
+    s2 = _to_unicode(str2)  
 
     return c_damerau_levenshtein(
-        str1, len(str1),
-        str2, len(str2),
+        s1, len(s1),
+        s2, len(s2),
         insert_costs,
         delete_costs,
         substitute_costs,
@@ -303,17 +310,20 @@ def optimal_string_alignment(
         ASCII character j, where character i is followed by character j in the string
     """
     if insert_costs is None:
-        insert_costs = unit_array
+        insert_costs = np.ones(128, dtype=np.float64) #unit_array
     if delete_costs is None:
-        delete_costs = unit_array
+        delete_costs = np.ones(128, dtype=np.float64) #unit_array
     if substitute_costs is None:
-        substitute_costs = unit_matrix
+        substitute_costs = np.ones((128,128), dtype=np.float64) #unit_matrix
     if transpose_costs is None:
-        transpose_costs = unit_matrix    
+        transpose_costs = np.ones((128,128), dtype=np.float64) #unit_matrix   
+
+    s1 = _to_unicode(str1)  
+    s2 = _to_unicode(str2)   
 
     return c_optimal_string_alignment(
-        str1, len(str1),
-        str2, len(str2),
+        s1, len(s1),
+        s2, len(s2),
         insert_costs,
         delete_costs,
         substitute_costs,
@@ -403,15 +413,18 @@ def levenshtein(
 
     """
     if insert_costs is None:
-        insert_costs = unit_array
+        insert_costs = np.ones(128, dtype=np.float64) #unit_matrix
     if delete_costs is None:
-        delete_costs = unit_array
+        delete_costs = np.ones(128, dtype=np.float64) #unit_matrix
     if substitute_costs is None:
-        substitute_costs = unit_matrix
+        substitute_costs = np.ones((128,128), dtype=np.float64) #unit_matrix
+
+    s1 = str(str1).encode()
+    s2 = str(str2).encode()  
 
     return c_levenshtein(
-        str1, len(str1),
-        str2, len(str2),
+        s1, len(s1),
+        s2, len(s2),
         insert_costs,
         delete_costs,
         substitute_costs
