@@ -1,6 +1,5 @@
 from setuptools import setup, find_packages
 from setuptools.extension import Extension
-import numpy
 
 with open('README.rst') as readme:
     long_description = readme.read()

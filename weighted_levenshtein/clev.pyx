@@ -7,7 +7,6 @@ from libc.stdlib cimport malloc, free
 
 from clev cimport DTYPE_t, DTYPE_MAX, ALPHABET_SIZE
 
-# in order to initialize unit arrays as fallback
 import numpy as np 
 
 
