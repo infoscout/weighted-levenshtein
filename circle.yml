@@ -1,9 +1,4 @@
 dependencies:
   post:
-    - pip install coverage
-
-test:
-  override:
-    - coverage run setup.py test
-  post:
-    - bash <(curl -s https://codecov.io/bash)
+    - pip install tox tox-pyenv
+    - pyenv local 2.7.12
