@@ -38,6 +38,7 @@ setup(
         'Topic :: Text Processing :: Linguistic',
     ],
     keywords='Levenshtein Damerau weight weighted distance',
+    test_suite='test.test',
     packages=find_packages(exclude=('test', 'docs')),
     package_data={
         'weighted_levenshtein': ['clev.pxd', 'clev.pyx']
