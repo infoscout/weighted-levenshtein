@@ -1,10 +1,10 @@
-from __future__ import print_function, absolute_import
+from __future__ import absolute_import, print_function
 
 import unittest
 
 import numpy as np
 
-from weighted_levenshtein import lev, osa, dam_lev
+from weighted_levenshtein import dam_lev, lev, osa
 
 
 class TestClev(unittest.TestCase):
