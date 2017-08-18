@@ -8,6 +8,7 @@ from weighted_levenshtein import lev, osa, dam_lev
 
 
 class TestClev(unittest.TestCase):
+
     def setUp(self):
         self.iw = np.ones(128, dtype=np.float64)
         self.dw = np.ones(128, dtype=np.float64)

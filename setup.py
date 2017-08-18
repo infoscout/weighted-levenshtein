@@ -1,6 +1,7 @@
 from setuptools import setup, find_packages
 from setuptools.extension import Extension
 
+
 try:
     from Cython.Build import cythonize
 except ImportError:
@@ -15,20 +16,16 @@ with open('README.rst') as readme:
 
 setup(
     name='weighted_levenshtein',
-
     version='0.1',
-
-    description='Library providing functions to calculate Levenshtein distance, Optimal String Alignment distance, '
-                'and Damerau-Levenshtein distance, where the cost of each operation can be weighted by letter.',
+    description=(
+        'Library providing functions to calculate Levenshtein distance, Optimal String Alignment distance, '
+        'and Damerau-Levenshtein distance, where the cost of each operation can be weighted by letter.'
+    ),
     long_description=long_description,
-
     url='https://github.com/infoscout/weighted-levenshtein',
-
     author='David Su (InfoScout)',
     author_email='david.su@infoscoutinc.com',
-
     license='MIT',
-
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
@@ -40,14 +37,10 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Text Processing :: Linguistic',
     ],
-
     keywords='Levenshtein Damerau weight weighted distance',
-
     packages=find_packages(exclude=('test', 'docs')),
-
     package_data={
         'weighted_levenshtein': ['clev.pxd', 'clev.pyx']
     },
-    
     ext_modules=extensions,
 )
