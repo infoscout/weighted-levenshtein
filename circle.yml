@@ -1,3 +1,0 @@
-dependencies:
-  post:
-    - pip install tox
