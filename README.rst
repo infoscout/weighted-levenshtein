@@ -4,6 +4,9 @@ weighted-levenshtein
 .. image:: https://circleci.com/gh/infoscout/weighted-levenshtein.svg?style=svg
     :target: https://circleci.com/gh/infoscout/weighted-levenshtein
 
+.. image:: https://codecov.io/gh/infoscout/weighted-levenshtein/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/infoscout/weighted-levenshtein
+
 Use Cases
 ---------
 

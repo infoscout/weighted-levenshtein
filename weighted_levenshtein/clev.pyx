@@ -1,5 +1,6 @@
 #!python
-# cython: language_level=2, boundscheck=False, wraparound=False, embedsignature=True
+# cython: language_level=2, boundscheck=False, wraparound=False, embedsignature=True, linetrace=True
+# distutils: define_macros=CYTHON_TRACE_NOGIL=1
 
 from libc.stdlib cimport malloc, free
 
