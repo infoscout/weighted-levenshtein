@@ -1,5 +1,5 @@
 #!python
-#cython: language_level=2, boundscheck=False, wraparound=False, embedsignature=True
+# cython: language_level=2, boundscheck=False, wraparound=False, embedsignature=True
 
 from libc.stdlib cimport malloc, free
 
@@ -31,7 +31,7 @@ ctypedef struct Array2D:
 
 cdef inline void Array2D_init(
     Array2D* array2d,
-    Py_ssize_t num_rows, 
+    Py_ssize_t num_rows,
     Py_ssize_t num_cols) nogil:
     """
     Initializes an Array2D struct with the given number of rows and columns
@@ -51,10 +51,10 @@ cdef inline void Array2D_del(
 
 cdef inline DTYPE_t Array2D_n1_get(
     Array2D array2d,
-    Py_ssize_t row, 
+    Py_ssize_t row,
     Py_ssize_t col) nogil:
     """
-    Takes the row and column index of a (-1)-indexed matrix 
+    Takes the row and column index of a (-1)-indexed matrix
     and returns the value at that location
     """
     row += 1
@@ -64,10 +64,10 @@ cdef inline DTYPE_t Array2D_n1_get(
 
 cdef inline DTYPE_t* Array2D_n1_at(
     Array2D array2d,
-    Py_ssize_t row, 
+    Py_ssize_t row,
     Py_ssize_t col) nogil:
     """
-    Takes the row and column index of a (-1)-indexed matrix 
+    Takes the row and column index of a (-1)-indexed matrix
     and returns a pointer to that location
     """
     row += 1
@@ -80,7 +80,7 @@ cdef inline DTYPE_t Array2D_0_get(
     Py_ssize_t row,
     Py_ssize_t col) nogil:
     """
-    Takes the row and column index of a 0-indexed matrix 
+    Takes the row and column index of a 0-indexed matrix
     and returns the value at that location
     """
     return array2d.mem[row * array2d.num_cols + col]
@@ -91,14 +91,14 @@ cdef inline DTYPE_t* Array2D_0_at(
     Py_ssize_t row,
     Py_ssize_t col) nogil:
     """
-    Takes the row and column index of a 0-indexed matrix 
+    Takes the row and column index of a 0-indexed matrix
     and returns a pointer to that location
     """
     return array2d.mem + row * array2d.num_cols + col
 
 
 cdef inline DTYPE_t col_delete_range_cost(
-    Array2D d, 
+    Array2D d,
     Py_ssize_t start,
     Py_ssize_t end) nogil:
     """
@@ -106,17 +106,17 @@ cdef inline DTYPE_t col_delete_range_cost(
     characters 'start' to 'end' (inclusive) from 'str1',
     assuming that 'str1' is 1-indexed.
 
-    Works since column 0 of 'd' is the cumulative sums 
+    Works since column 0 of 'd' is the cumulative sums
     of the deletion costs of the characters in str1.
 
-    This function computes the range sum by computing the difference 
+    This function computes the range sum by computing the difference
     between the cumulative sums at each end of the range.
     """
     return Array2D_n1_get(d, end, 0) - Array2D_n1_get(d, start - 1, 0)
 
 
 cdef inline DTYPE_t row_insert_range_cost(
-    Array2D d, 
+    Array2D d,
     Py_ssize_t start,
     Py_ssize_t end) nogil:
     """
@@ -124,10 +124,10 @@ cdef inline DTYPE_t row_insert_range_cost(
     characters 'start' to 'end' (inclusive) from 'str2',
     assuming that 'str2' is 1-indexed.
 
-    Works since row 0 of 'd' is the cumulative sums 
+    Works since row 0 of 'd' is the cumulative sums
     of the insertion costs of the characters in str2.
-    
-    This function computes the range sum by computing the difference 
+
+    This function computes the range sum by computing the difference
     between the cumulative sums at each end of the range.
     """
     return Array2D_n1_get(d, 0, end) - Array2D_n1_get(d, 0, start - 1)
@@ -166,10 +166,10 @@ def damerau_levenshtein(
     :param np.ndarray delete_costs: a numpy array of np.float64 (C doubles) of length 128 (0..127),
         where delete_costs[i] is the cost of deleting ASCII character i
     :param np.ndarray substitute_costs: a 2D numpy array of np.float64 (C doubles) of dimensions (128, 128),
-        where substitute_costs[i, j] is the cost of substituting ASCII character i with 
+        where substitute_costs[i, j] is the cost of substituting ASCII character i with
         ASCII character j
     :param np.ndarray transpose_costs: a 2D numpy array of np.float64 (C doubles) of dimensions (128, 128),
-        where transpose_costs[i, j] is the cost of transposing ASCII character i with 
+        where transpose_costs[i, j] is the cost of transposing ASCII character i with
         ASCII character j, where character i is followed by character j in the string
     """
     if insert_costs is None:
@@ -179,7 +179,7 @@ def damerau_levenshtein(
     if substitute_costs is None:
         substitute_costs = unit_matrix
     if transpose_costs is None:
-        transpose_costs = unit_matrix    
+        transpose_costs = unit_matrix
 
     return c_damerau_levenshtein(
         str1, len(str1),
@@ -220,7 +220,7 @@ cdef DTYPE_t c_damerau_levenshtein(
         da[i] = 0
 
     # fill row (-1) and column (-1) with 'DTYPE_MAX'
-    Array2D_n1_at(d, -1, -1)[0] = DTYPE_MAX 
+    Array2D_n1_at(d, -1, -1)[0] = DTYPE_MAX
     for i in range(0, len1 + 1):
         Array2D_n1_at(d, i, -1)[0] = DTYPE_MAX
     for j in range(0, len2 + 1):
@@ -291,10 +291,10 @@ def optimal_string_alignment(
     :param np.ndarray delete_costs: a numpy array of np.float64 (C doubles) of length 128 (0..127),
         where delete_costs[i] is the cost of deleting ASCII character i
     :param np.ndarray substitute_costs: a 2D numpy array of np.float64 (C doubles) of dimensions (128, 128),
-        where substitute_costs[i, j] is the cost of substituting ASCII character i with 
+        where substitute_costs[i, j] is the cost of substituting ASCII character i with
         ASCII character j
     :param np.ndarray transpose_costs: a 2D numpy array of np.float64 (C doubles) of dimensions (128, 128),
-        where transpose_costs[i, j] is the cost of transposing ASCII character i with 
+        where transpose_costs[i, j] is the cost of transposing ASCII character i with
         ASCII character j, where character i is followed by character j in the string
     """
     if insert_costs is None:
@@ -304,7 +304,7 @@ def optimal_string_alignment(
     if substitute_costs is None:
         substitute_costs = unit_matrix
     if transpose_costs is None:
-        transpose_costs = unit_matrix    
+        transpose_costs = unit_matrix
 
     return c_optimal_string_alignment(
         str1, len(str1),
@@ -342,7 +342,7 @@ cdef DTYPE_t c_optimal_string_alignment(
         char_i = str_1_get(str1, i)
         Array2D_0_at(d, i, 0)[0] = Array2D_0_get(d, i - 1, 0) + delete_costs[char_i]
     for j in range(1, len2 + 1):
-        char_j = str_1_get(str2, j) 
+        char_j = str_1_get(str2, j)
         Array2D_0_at(d, 0, j)[0] = Array2D_0_get(d, 0, j - 1) + insert_costs[char_j]
 
     # fill DP array
@@ -393,7 +393,7 @@ def levenshtein(
     :param np.ndarray delete_costs: a numpy array of np.float64 (C doubles) of length 128 (0..127),
         where delete_costs[i] is the cost of deleting ASCII character i
     :param np.ndarray substitute_costs: a 2D numpy array of np.float64 (C doubles) of dimensions (128, 128),
-        where substitute_costs[i, j] is the cost of substituting ASCII character i with 
+        where substitute_costs[i, j] is the cost of substituting ASCII character i with
         ASCII character j
 
     """
@@ -439,7 +439,7 @@ cdef DTYPE_t c_levenshtein(
     for j in range(1, len2 + 1):
         char_j = str_1_get(str2, j)
         Array2D_0_at(d, 0, j)[0] = Array2D_0_get(d, 0, j - 1) + insert_costs[char_j]
-    
+
     for i in range(1, len1 + 1):
         char_i = str_1_get(str1, i)
         for j in range(1, len2 + 1):
@@ -456,4 +456,3 @@ cdef DTYPE_t c_levenshtein(
     ret_val = Array2D_0_get(d, len1, len2)
     Array2D_del(d)
     return ret_val
-
