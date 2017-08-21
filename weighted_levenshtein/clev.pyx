@@ -1,7 +1,6 @@
 #!python
-#cython: language_level=2, boundscheck=False, wraparound=False, embedsignature=True, c_string_type=str, c_string_encoding=ascii
-
-from cpython.version cimport PY_MAJOR_VERSION
+# cython: language_level=2, boundscheck=False, wraparound=False, embedsignature=True, linetrace=True, c_string_type=str, c_string_encoding=ascii
+# distutils: define_macros=CYTHON_TRACE_NOGIL=1
 
 from libc.stdlib cimport malloc, free
 
@@ -457,4 +456,3 @@ cdef DTYPE_t c_levenshtein(
     ret_val = Array2D_0_get(d, len1, len2)
     Array2D_del(d)
     return ret_val
-

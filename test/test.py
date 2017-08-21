@@ -1,13 +1,14 @@
-from __future__ import print_function, absolute_import
+from __future__ import absolute_import, print_function
 
 import unittest
 
 import numpy as np
 
-from weighted_levenshtein import lev, osa, dam_lev
+from weighted_levenshtein import dam_lev, lev, osa
 
 
 class TestClev(unittest.TestCase):
+
     def setUp(self):
         self.iw = np.ones(128, dtype=np.float64)
         self.dw = np.ones(128, dtype=np.float64)
