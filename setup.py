@@ -5,6 +5,7 @@ from setuptools.extension import Extension
 with open('README.rst') as readme:
     long_description = readme.read()
 
+
 setup(
     name='weighted_levenshtein',
     version='0.1',
@@ -26,7 +27,7 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Text Processing :: Linguistic',
     ],
@@ -36,12 +37,10 @@ setup(
     package_data={
         'weighted_levenshtein': ['clev.pxd', 'clev.pyx']
     },
-    
     setup_requires=[
         # Setuptools 18.0 properly handles Cython extensions.
         'setuptools>=18.0',
         'cython',
     ],   
-
     ext_modules=[Extension("weighted_levenshtein.clev", ['weighted_levenshtein/clev.pyx'])],
 )
