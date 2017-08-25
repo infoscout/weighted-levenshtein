@@ -152,53 +152,34 @@ class TestClev(unittest.TestCase):
         self.assertEqual(self._dl('bca', 'ab'), 2.5)
 
 
-class TestClev_noinit(unittest.TestCase):
+class TestClevUsingDefaultValues(unittest.TestCase):
 
-    def setUp(self):
-        pass
+    def test_lev(self):
+        self.assertEqual(lev('1234', '1234'), 0.0)
+        self.assertEqual(lev('', '1234'), 4.0)
+        self.assertEqual(lev('1234', ''), 4.0)
+        self.assertEqual(lev('', ''), 0.0)
+        self.assertEqual(lev('1234', '12'), 2.0)
+        self.assertEqual(lev('1234', '14'), 2.0)
+        self.assertEqual(lev('1111', '1'), 3.0)
 
-    def _lev(self, x, y):
-        return lev(x, y)
+    def test_osa(self):
+        self.assertEqual(osa('1234', '1234'), 0.0)
+        self.assertEqual(osa('', '1234'), 4.0)
+        self.assertEqual(osa('1234', ''), 4.0)
+        self.assertEqual(osa('', ''), 0.0)
+        self.assertEqual(osa('1234', '12'), 2.0)
+        self.assertEqual(osa('1234', '14'), 2.0)
+        self.assertEqual(osa('1111', '1'), 3.0)
 
-    def _osa(self, x, y):
-        return osa(x, y)
-
-    def _dl(self, x, y):
-        return dam_lev(x, y)
-
-    def test_lev_noinit(self):
-        self.assertEqual(self._lev('1234', '1234'), 0.0)
-        self.assertEqual(self._lev('', '1234'), 4.0)
-        self.assertEqual(self._lev('1234', ''), 4.0)
-        self.assertEqual(self._lev('', ''), 0.0)
-        self.assertEqual(self._lev('1234', '12'), 2.0)
-        self.assertEqual(self._lev('1234', '14'), 2.0)
-        self.assertEqual(self._lev('1111', '1'), 3.0)
-
-    def test_osa_noinit(self):
-        self.assertEqual(self._osa('1234', '1234'), 0.0)
-        self.assertEqual(self._osa('', '1234'), 4.0)
-        self.assertEqual(self._osa('1234', ''), 4.0)
-        self.assertEqual(self._osa('', ''), 0.0)
-        self.assertEqual(self._osa('1234', '12'), 2.0)
-        self.assertEqual(self._osa('1234', '14'), 2.0)
-        self.assertEqual(self._osa('1111', '1'), 3.0)
-
-    def test_dl_noinit(self):
-        self.assertEqual(self._dl('', ''), 0)
-        self.assertEqual(self._dl('', 'a'), 1)
-        self.assertEqual(self._dl('a', ''), 1)
-        self.assertEqual(self._dl('a', 'b'), 1)
-        self.assertEqual(self._dl('a', 'ab'), 1)
-        self.assertEqual(self._dl('ab', 'ba'), 1)
-        self.assertEqual(self._dl('ab', 'bca'), 2)
-        self.assertEqual(self._dl('bca', 'ab'), 2)
-        self.assertEqual(self._dl('ab', 'bdca'), 3)
-        self.assertEqual(self._dl('bdca', 'ab'), 3)
-
-
-if __name__ == '__main__':
-    init_suite = unittest.TestLoader().loadTestsFromTestCase(TestClev)
-    noinit_suite = unittest.TestLoader().loadTestsFromTestCase(TestClev_noinit)
-    alltests = unittest.TestSuite([init_suite, noinit_suite])
-    unittest.TextTestRunner(verbosity=2).run(alltests)
+    def test_dl(self):
+        self.assertEqual(dam_lev('', ''), 0)
+        self.assertEqual(dam_lev('', 'a'), 1)
+        self.assertEqual(dam_lev('a', ''), 1)
+        self.assertEqual(dam_lev('a', 'b'), 1)
+        self.assertEqual(dam_lev('a', 'ab'), 1)
+        self.assertEqual(dam_lev('ab', 'ba'), 1)
+        self.assertEqual(dam_lev('ab', 'bca'), 2)
+        self.assertEqual(dam_lev('bca', 'ab'), 2)
+        self.assertEqual(dam_lev('ab', 'bdca'), 3)
+        self.assertEqual(dam_lev('bdca', 'ab'), 3)

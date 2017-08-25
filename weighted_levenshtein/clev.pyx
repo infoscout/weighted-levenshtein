@@ -1,22 +1,19 @@
 #!python
-# cython: language_level=2, boundscheck=False, wraparound=False, embedsignature=True, linetrace=True, c_string_type=str, c_string_encoding=ascii
+# cython: language_level=3, boundscheck=False, wraparound=False, embedsignature=True, linetrace=True, c_string_type=str, c_string_encoding=ascii
 # distutils: define_macros=CYTHON_TRACE_NOGIL=1
 
 from libc.stdlib cimport malloc, free
+from cython.view cimport array as cvarray
+from .clev cimport DTYPE_t, DTYPE_MAX, ALPHABET_SIZE
 
-from clev cimport DTYPE_t, DTYPE_MAX, ALPHABET_SIZE
 
+cyarr = cvarray(shape=(ALPHABET_SIZE,), itemsize=sizeof(double), format="d")
+cdef DTYPE_t[::1] unit_array = cyarr
+unit_array[:] = 1
 
-cdef size_t ii, jj
-cdef DTYPE_t unit_array[ALPHABET_SIZE]
-cdef DTYPE_t unit_matrix[ALPHABET_SIZE][ALPHABET_SIZE]
-
-for ii in range(ALPHABET_SIZE):
-    unit_array[ii] = 1
-
-for ii in range(ALPHABET_SIZE):
-    for jj in range(ALPHABET_SIZE):
-        unit_matrix[ii][jj] = 1
+cymatrix = cvarray(shape=(ALPHABET_SIZE, ALPHABET_SIZE), itemsize=sizeof(double), format="d")
+cdef DTYPE_t[:,::1] unit_matrix = cymatrix
+unit_matrix[:, :] = 1
 
 
 # Begin helper functions
