@@ -1,22 +1,19 @@
 #!python
-# cython: language_level=2, boundscheck=False, wraparound=False, embedsignature=True, linetrace=True
+# cython: language_level=3, boundscheck=False, wraparound=False, embedsignature=True, linetrace=True, c_string_type=str, c_string_encoding=ascii
 # distutils: define_macros=CYTHON_TRACE_NOGIL=1
 
 from libc.stdlib cimport malloc, free
+from cython.view cimport array as cvarray
+from .clev cimport DTYPE_t, DTYPE_MAX, ALPHABET_SIZE
 
-from clev cimport DTYPE_t, DTYPE_MAX, ALPHABET_SIZE
 
+cyarr = cvarray(shape=(ALPHABET_SIZE,), itemsize=sizeof(double), format="d")
+cdef DTYPE_t[::1] unit_array = cyarr
+unit_array[:] = 1
 
-cdef size_t ii, jj
-cdef DTYPE_t unit_array[ALPHABET_SIZE]
-cdef DTYPE_t unit_matrix[ALPHABET_SIZE][ALPHABET_SIZE]
-
-for ii in range(ALPHABET_SIZE):
-    unit_array[ii] = 1
-
-for ii in range(ALPHABET_SIZE):
-    for jj in range(ALPHABET_SIZE):
-        unit_matrix[ii][jj] = 1
+cymatrix = cvarray(shape=(ALPHABET_SIZE, ALPHABET_SIZE), itemsize=sizeof(double), format="d")
+cdef DTYPE_t[:,::1] unit_matrix = cymatrix
+unit_matrix[:, :] = 1
 
 
 # Begin helper functions
@@ -182,9 +179,12 @@ def damerau_levenshtein(
     if transpose_costs is None:
         transpose_costs = unit_matrix
 
+    s1 = str(str1).encode()  
+    s2 = str(str2).encode()  
+
     return c_damerau_levenshtein(
-        str1, len(str1),
-        str2, len(str2),
+        s1, len(s1),
+        s2, len(s2),
         insert_costs,
         delete_costs,
         substitute_costs,
@@ -307,9 +307,12 @@ def optimal_string_alignment(
     if transpose_costs is None:
         transpose_costs = unit_matrix
 
+    s1 = str(str1).encode()  
+    s2 = str(str2).encode()   
+
     return c_optimal_string_alignment(
-        str1, len(str1),
-        str2, len(str2),
+        s1, len(s1),
+        s2, len(s2),
         insert_costs,
         delete_costs,
         substitute_costs,
@@ -405,9 +408,12 @@ def levenshtein(
     if substitute_costs is None:
         substitute_costs = unit_matrix
 
+    s1 = str(str1).encode()
+    s2 = str(str2).encode()  
+
     return c_levenshtein(
-        str1, len(str1),
-        str2, len(str2),
+        s1, len(s1),
+        s2, len(s2),
         insert_costs,
         delete_costs,
         substitute_costs
