@@ -108,7 +108,7 @@ Important Notes
 
 - The costs parameters only accept numpy arrays, since the underlying Cython implementation relies on this for fast lookups. The numpy arrays are indexed using the ``ord()`` value of the characters. Thus, only the first 128 ASCII letters are accepted, and ``dict`` and ``list`` are not accepted. Consequently, the strings must be strictly ``str`` objects, not ``unicode``.
 
-- This library is compatible with both Python 2 and Python 3 (tested on versions 2.7 and 3.6).
+- This library is compatible with both Python 2 and Python 3 (see ``tox.ini`` for tested versions).
 
 
 
