@@ -2,6 +2,14 @@ from setuptools import find_packages, setup
 from setuptools.extension import Extension
 
 
+try:
+    from Cython.Build import cythonize
+except ImportError:
+    extensions = [Extension("weighted_levenshtein.clev", ['weighted_levenshtein/clev.c'])]
+else:
+    extensions = cythonize([Extension("weighted_levenshtein.clev", ['weighted_levenshtein/clev.pyx'])])
+
+
 with open('README.rst') as readme:
     long_description = readme.read()
 
@@ -42,5 +50,5 @@ setup(
         'setuptools>=18.0',
         'cython',
     ],
-    ext_modules=[Extension("weighted_levenshtein.clev", ['weighted_levenshtein/clev.pyx'])],
+    ext_modules=extensions,
 )
