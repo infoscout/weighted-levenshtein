@@ -1,0 +1,35 @@
+version: 2
+jobs:
+  test-py36: &test-template
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+      - run:
+          name: Setup a virtualenv
+          command: virtualenv venv
+      - run:
+          name: Install dependencies
+          command: |
+            source venv/bin/activate
+            pip install -r requirements.txt
+            pip install coverage
+      - run:
+          name: Run tests with coverage
+          command: |
+            source venv/bin/activate
+            coverage run setup.py test
+            coverage xml -i
+      - run:
+          name: Send coverage results to CodeCov
+          command: bash <(curl -s https://codecov.io/bash)
+  test-py27:
+    <<: *test-template
+    docker:
+      - image: circleci/python:2.7
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test-py36
+      - test-py27
