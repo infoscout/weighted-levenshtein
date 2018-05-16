@@ -47,7 +47,7 @@ setup(
     },
     setup_requires=[
         # Setuptools 18.0 properly handles Cython extensions.
-        'setuptools>=18.0',
+        'setuptools >= 18.0',
         'cython',
     ],
     ext_modules=extensions,
