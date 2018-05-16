@@ -41,9 +41,9 @@ setup(
     ],
     keywords='Levenshtein Damerau weight weighted distance',
     test_suite='test.test',
-    packages=find_packages(exclude=('test', 'docs')),
+    packages=find_packages(exclude=('test', 'docs',)),
     package_data={
-        'weighted_levenshtein': ['clev.pxd', 'clev.pyx']
+        'weighted_levenshtein': ['clev.pxd', 'clev.pyx'],
     },
     setup_requires=[
         # Setuptools 18.0 properly handles Cython extensions.
