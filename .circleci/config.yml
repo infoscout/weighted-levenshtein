@@ -3,6 +3,7 @@ jobs:
   test-py36: &test-template
     docker:
       - image: circleci/python:3.6
+    resource_class: small
     steps:
       - checkout
       - run:
