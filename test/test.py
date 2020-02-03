@@ -206,6 +206,9 @@ class TestClevWithUnicode(unittest.TestCase):
     def _osa(self, x, y):
         return osa(x, y, self.iw, self.dw, self.sw, self.tw)
 
+    def _dl(self, x, y):
+        return dam_lev(x, y, self.iw, self.dw, self.sw, self.tw)
+
     def test_lev(self):
         try:
             self.assertEqual(self._lev('átívelődök', 'átívelődök'), 0.0)
@@ -225,5 +228,16 @@ class TestClevWithUnicode(unittest.TestCase):
             self.assertEqual(self._osa('', ''), 0.0)
             self.assertEqual(self._osa('átívelődök', 'átívelőd'), 2.0)
             self.assertEqual(self._osa('', 'ҰǴʚΏ¤☣✐'), 16.0)
+        except UnicodeEncodeError:
+            self.fail("Could not handle special characters")
+
+    def test_dl(self):
+        try:
+            self.assertEqual(self._dl('átívelődök', 'átívelődök'), 0.0)
+            self.assertEqual(self._dl('', 'átívelődök'), 19.0)
+            self.assertEqual(self._dl('átívelődök', ''), 19.0)
+            self.assertEqual(self._dl('', ''), 0.0)
+            self.assertEqual(self._dl('átívelődök', 'átívelőd'), 2.0)
+            self.assertEqual(self._dl('', 'ҰǴʚΏ¤☣✐'), 16.0)
         except UnicodeEncodeError:
             self.fail("Could not handle special characters")

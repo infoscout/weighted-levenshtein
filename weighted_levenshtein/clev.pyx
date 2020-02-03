@@ -144,6 +144,8 @@ cdef inline unsigned char str_1_get(unsigned char* s, Py_ssize_t i) nogil:
     Takes an index of a 1-indexed string
     and returns that character
     """
+    if i - 1 < 0:
+        return 0
     return s[i - 1]
 
 cdef inline int int_array_1_get(int[:] s, Py_ssize_t i) nogil:
@@ -151,6 +153,8 @@ cdef inline int int_array_1_get(int[:] s, Py_ssize_t i) nogil:
     Takes an index of a 1-indexed int array
     and returns that number
     """
+    if i - 1 < 0:
+        return 0
     return s[i - 1]
 
 # End helper functions
@@ -192,12 +196,12 @@ def damerau_levenshtein(
     if transpose_costs is None:
         transpose_costs = unit_matrix
 
-    s1 = str(str1).encode()  
-    s2 = str(str2).encode()  
+    intarr1 = convert_string_to_int_array(str1)
+    intarr2 = convert_string_to_int_array(str2)
 
     return c_damerau_levenshtein(
-        s1, len(s1),
-        s2, len(s2),
+        intarr1, intarr1.size,
+        intarr2, intarr2.size,
         insert_costs,
         delete_costs,
         substitute_costs,
@@ -208,8 +212,8 @@ dam_lev = damerau_levenshtein
 
 
 cdef DTYPE_t c_damerau_levenshtein(
-    unsigned char* str1, Py_ssize_t len1,
-    unsigned char* str2, Py_ssize_t len2,
+    int[:] str1, Py_ssize_t len1,
+    int[:] str2, Py_ssize_t len2,
     DTYPE_t[::1] insert_costs,
     DTYPE_t[::1] delete_costs,
     DTYPE_t[:,::1] substitute_costs,
@@ -221,7 +225,7 @@ cdef DTYPE_t c_damerau_levenshtein(
         Py_ssize_t[ALPHABET_SIZE] da
 
         Py_ssize_t i, j
-        unsigned char char_i, char_j
+        unsigned int char_i, char_j
         DTYPE_t cost, ret_val
         Py_ssize_t db, k, l
 
@@ -243,21 +247,20 @@ cdef DTYPE_t c_damerau_levenshtein(
     # fill row 0 and column 0 with insertion and deletion costs
     Array2D_n1_at(d, 0, 0)[0] = 0
     for i in range(1, len1 + 1):
-        char_i = str_1_get(str1, i)
+        char_i = int_array_1_get(str1, i)
         cost = delete_costs[char_i]
         Array2D_n1_at(d, i, 0)[0] = Array2D_n1_get(d, i - 1, 0) + cost
     for j in range(1, len2 + 1):
-        char_j = str_1_get(str2, j)
+        char_j = int_array_1_get(str2, j)
         cost = insert_costs[char_j]
         Array2D_n1_at(d, 0, j)[0] = Array2D_n1_get(d, 0, j - 1) + cost
 
     # fill DP array
     for i in range(1, len1 + 1):
-        char_i = str_1_get(str1, i)
-
+        char_i = int_array_1_get(str1, i)
         db = 0
         for j in range(1, len2 + 1):
-            char_j = str_1_get(str2, j)
+            char_j = int_array_1_get(str2, j)
 
             k = da[char_j]
             l = db
@@ -273,7 +276,7 @@ cdef DTYPE_t c_damerau_levenshtein(
                 Array2D_n1_get(d, i - 1, j) + delete_costs[char_i],    # delete
                 Array2D_n1_get(d, k - 1, l - 1) +                        # transpose
                     col_delete_range_cost(d, k + 1, i - 1) +                      # delete chars in between
-                    transpose_costs[str_1_get(str1, k), str_1_get(str1, i)] +   # transpose chars
+                    transpose_costs[int_array_1_get(str1, k), int_array_1_get(str1, i)] +   # transpose chars
                     row_insert_range_cost(d, l + 1, j - 1)                        # insert chars in between
             )
 

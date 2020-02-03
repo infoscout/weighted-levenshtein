@@ -7,9 +7,9 @@ cdef enum:
 
 
 cdef DTYPE_t c_damerau_levenshtein(
-	unsigned char* str_a,
+	int[:] str_a,
 	Py_ssize_t len_a,
-	unsigned char* str_b,
+	int[:] str_b,
 	Py_ssize_t len_b,
 	DTYPE_t[::1] insert_costs,
 	DTYPE_t[::1] delete_costs,
