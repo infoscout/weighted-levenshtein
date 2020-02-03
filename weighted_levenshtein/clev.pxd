@@ -3,7 +3,7 @@ from libc.float cimport DBL_MAX as DTYPE_MAX
 ctypedef double DTYPE_t
 
 cdef enum:
-    ALPHABET_SIZE = 128
+    ALPHABET_SIZE = 512
 
 
 cdef DTYPE_t c_damerau_levenshtein(
@@ -18,9 +18,9 @@ cdef DTYPE_t c_damerau_levenshtein(
 
 
 cdef DTYPE_t c_optimal_string_alignment(
-	unsigned char* word_m,
+	int[:] word_m,
 	Py_ssize_t m,
-	unsigned char* word_n,
+	int[:] word_n,
 	Py_ssize_t n,
 	DTYPE_t[::1] insert_costs,
 	DTYPE_t[::1] delete_costs,
@@ -29,9 +29,9 @@ cdef DTYPE_t c_optimal_string_alignment(
 
 
 cdef DTYPE_t c_levenshtein(
-	unsigned char* word_m,
+	int[:] word_m,
 	Py_ssize_t m,
-	unsigned char* word_n,
+	int[:] word_n,
 	Py_ssize_t n,
 	DTYPE_t[::1] insert_costs,
 	DTYPE_t[::1] delete_costs,
