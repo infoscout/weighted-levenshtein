@@ -200,8 +200,7 @@ def damerau_levenshtein(
     intarr2 = convert_string_to_int_array(str2)
 
     return c_damerau_levenshtein(
-        intarr1, intarr1.size,
-        intarr2, intarr2.size,
+        intarr1, intarr2,
         insert_costs,
         delete_costs,
         substitute_costs,
@@ -212,8 +211,7 @@ dam_lev = damerau_levenshtein
 
 
 cdef DTYPE_t c_damerau_levenshtein(
-    int[:] str1, Py_ssize_t len1,
-    int[:] str2, Py_ssize_t len2,
+    int[:] str1, int[:] str2,
     DTYPE_t[::1] insert_costs,
     DTYPE_t[::1] delete_costs,
     DTYPE_t[:,::1] substitute_costs,
@@ -228,8 +226,11 @@ cdef DTYPE_t c_damerau_levenshtein(
         unsigned int char_i, char_j
         DTYPE_t cost, ret_val
         Py_ssize_t db, k, l
-
         Array2D d
+        Py_ssize_t len1, len2
+
+    len1 = str1.shape[0]
+    len2 = str2.shape[0]
 
     Array2D_init(&d, len1 + 2, len2 + 2)
 
@@ -327,8 +328,7 @@ def optimal_string_alignment(
     intarr2 = convert_string_to_int_array(str2)
 
     return c_optimal_string_alignment(
-        intarr1, intarr1.size,
-        intarr2, intarr2.size,
+        intarr1, intarr2,
         insert_costs,
         delete_costs,
         substitute_costs,
@@ -339,8 +339,7 @@ osa = optimal_string_alignment
 
 
 cdef DTYPE_t c_optimal_string_alignment(
-    int[:] str1, Py_ssize_t len1,
-    int[:] str2, Py_ssize_t len2,
+    int[:] str1, int[:] str2,
     DTYPE_t[::1] insert_costs,
     DTYPE_t[::1] delete_costs,
     DTYPE_t[:,::1] substitute_costs,
@@ -353,6 +352,10 @@ cdef DTYPE_t c_optimal_string_alignment(
         unsigned int char_i, char_j, prev_char_i, prev_char_j
         DTYPE_t ret_val
         Array2D d
+        Py_ssize_t len1, len2
+
+    len1 = str1.shape[0]
+    len2 = str2.shape[0]
 
     Array2D_init(&d, len1 + 1, len2 + 1)
 
@@ -428,8 +431,7 @@ def levenshtein(
     intarr2 = convert_string_to_int_array(str2)
 
     return c_levenshtein(
-        intarr1, intarr1.size,
-        intarr2, intarr2.size,
+        intarr1, intarr2,
         insert_costs,
         delete_costs,
         substitute_costs
@@ -439,8 +441,7 @@ lev = levenshtein
 
 
 cdef DTYPE_t c_levenshtein(
-    int[:] str1, Py_ssize_t len1,
-    int[:] str2, Py_ssize_t len2,
+    int[:] str1, int[:] str2,
     DTYPE_t[::1] insert_costs,
     DTYPE_t[::1] delete_costs,
     DTYPE_t[:,::1] substitute_costs) nogil:
@@ -452,6 +453,10 @@ cdef DTYPE_t c_levenshtein(
         unsigned int char_i, char_j
         DTYPE_t ret_val
         Array2D d
+        Py_ssize_t len1, len2
+
+    len1 = str1.shape[0]
+    len2 = str2.shape[0]
 
     Array2D_init(&d, len1 + 1, len2 + 1)
 
