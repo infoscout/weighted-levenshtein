@@ -144,8 +144,6 @@ cdef inline unsigned char str_1_get(unsigned char* s, Py_ssize_t i) nogil:
     Takes an index of a 1-indexed string
     and returns that character
     """
-    if i - 1 < 0:
-        return 0
     return s[i - 1]
 
 cdef inline int int_array_1_get(int[:] s, Py_ssize_t i) nogil:
@@ -153,8 +151,6 @@ cdef inline int int_array_1_get(int[:] s, Py_ssize_t i) nogil:
     Takes an index of a 1-indexed int array
     and returns that number
     """
-    if i - 1 < 0:
-        return 0
     return s[i - 1]
 
 # End helper functions
@@ -229,6 +225,11 @@ cdef DTYPE_t c_damerau_levenshtein(
         Array2D d
         Py_ssize_t len1, len2
 
+        DTYPE_t substitute_cost
+        DTYPE_t insert_cost
+        DTYPE_t delete_cost
+        DTYPE_t transpose_cost
+
     len1 = str1.shape[0]
     len2 = str2.shape[0]
 
@@ -271,14 +272,25 @@ cdef DTYPE_t c_damerau_levenshtein(
             else:
                 cost = substitute_costs[char_i, char_j]
 
+            substitute_cost = Array2D_n1_get(d, i - 1, j - 1) + cost
+            insert_cost = Array2D_n1_get(d, i, j - 1) + insert_costs[char_j]
+            delete_cost = Array2D_n1_get(d, i - 1, j) + delete_costs[char_i]
+            if k <= 0:
+                # char_j hasn't been seen yet, so nothing to swap
+                transpose_cost = DTYPE_MAX
+            else:
+                # char_j has been seen, swap with char_i
+                transpose_cost = \
+                    Array2D_n1_get(d, k - 1, l - 1) + \
+                        col_delete_range_cost(d, k + 1, i - 1) + \
+                        transpose_costs[char_j, char_i] + \
+                        row_insert_range_cost(d, l + 1, j - 1)
+
             Array2D_n1_at(d, i, j)[0] = min(
-                Array2D_n1_get(d, i - 1, j - 1) + cost,                  # equal/substitute
-                Array2D_n1_get(d, i, j - 1) + insert_costs[char_j],    # insert
-                Array2D_n1_get(d, i - 1, j) + delete_costs[char_i],    # delete
-                Array2D_n1_get(d, k - 1, l - 1) +                        # transpose
-                    col_delete_range_cost(d, k + 1, i - 1) +                      # delete chars in between
-                    transpose_costs[int_array_1_get(str1, k), int_array_1_get(str1, i)] +   # transpose chars
-                    row_insert_range_cost(d, l + 1, j - 1)                        # insert chars in between
+                substitute_cost,
+                insert_cost,
+                delete_cost,
+                transpose_cost
             )
 
         da[char_i] = i
