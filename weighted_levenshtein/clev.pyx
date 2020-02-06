@@ -195,7 +195,7 @@ def damerau_levenshtein(
     intarr1 = convert_string_to_int_array(str1)
     intarr2 = convert_string_to_int_array(str2)
 
-    return c_damerau_levenshtein(
+    return c_damerau_levenshtein_unicode(
         intarr1, intarr2,
         insert_costs,
         delete_costs,
@@ -206,7 +206,7 @@ def damerau_levenshtein(
 dam_lev = damerau_levenshtein
 
 
-cdef DTYPE_t c_damerau_levenshtein(
+cdef DTYPE_t c_damerau_levenshtein_unicode(
     int[:] str1, int[:] str2,
     DTYPE_t[::1] insert_costs,
     DTYPE_t[::1] delete_costs,
@@ -339,7 +339,7 @@ def optimal_string_alignment(
     intarr1 = convert_string_to_int_array(str1)
     intarr2 = convert_string_to_int_array(str2)
 
-    return c_optimal_string_alignment(
+    return c_optimal_string_alignment_unicode(
         intarr1, intarr2,
         insert_costs,
         delete_costs,
@@ -350,7 +350,7 @@ def optimal_string_alignment(
 osa = optimal_string_alignment
 
 
-cdef DTYPE_t c_optimal_string_alignment(
+cdef DTYPE_t c_optimal_string_alignment_unicode(
     int[:] str1, int[:] str2,
     DTYPE_t[::1] insert_costs,
     DTYPE_t[::1] delete_costs,
@@ -442,7 +442,7 @@ def levenshtein(
     intarr1 = convert_string_to_int_array(str1)
     intarr2 = convert_string_to_int_array(str2)
 
-    return c_levenshtein(
+    return c_levenshtein_unicode(
         intarr1, intarr2,
         insert_costs,
         delete_costs,
@@ -452,7 +452,7 @@ def levenshtein(
 lev = levenshtein
 
 
-cdef DTYPE_t c_levenshtein(
+cdef DTYPE_t c_levenshtein_unicode(
     int[:] str1, int[:] str2,
     DTYPE_t[::1] insert_costs,
     DTYPE_t[::1] delete_costs,
@@ -484,6 +484,180 @@ cdef DTYPE_t c_levenshtein(
         char_i = int_array_1_get(str1, i)
         for j in range(1, len2 + 1):
             char_j = int_array_1_get(str2, j)
+            if char_i == char_j:  # match
+                Array2D_0_at(d, i, j)[0] = Array2D_0_get(d, i - 1, j - 1)
+            else:
+                Array2D_0_at(d, i, j)[0] = min(
+                    Array2D_0_get(d, i - 1, j) + delete_costs[char_i],
+                    Array2D_0_get(d, i, j - 1) + insert_costs[char_j],
+                    Array2D_0_get(d, i - 1, j - 1) + substitute_costs[char_i, char_j]
+                )
+
+    ret_val = Array2D_0_get(d, len1, len2)
+    Array2D_del(d)
+    return ret_val
+
+# Legacy code
+
+cdef DTYPE_t c_damerau_levenshtein(
+    unsigned char* str1, Py_ssize_t len1,
+    unsigned char* str2, Py_ssize_t len2,
+    DTYPE_t[::1] insert_costs,
+    DTYPE_t[::1] delete_costs,
+    DTYPE_t[:,::1] substitute_costs,
+    DTYPE_t[:,::1] transpose_costs) nogil:
+    """
+    https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance#Distance_with_adjacent_transpositions
+    """
+    cdef:
+        Py_ssize_t[ALPHABET_SIZE] da
+
+        Py_ssize_t i, j
+        unsigned char char_i, char_j
+        DTYPE_t cost, ret_val
+        Py_ssize_t db, k, l
+
+        Array2D d
+
+    Array2D_init(&d, len1 + 2, len2 + 2)
+
+    # initialize 'da' to all 0
+    for i in range(ALPHABET_SIZE):
+        da[i] = 0
+
+    # fill row (-1) and column (-1) with 'DTYPE_MAX'
+    Array2D_n1_at(d, -1, -1)[0] = DTYPE_MAX
+    for i in range(0, len1 + 1):
+        Array2D_n1_at(d, i, -1)[0] = DTYPE_MAX
+    for j in range(0, len2 + 1):
+        Array2D_n1_at(d, -1, j)[0] = DTYPE_MAX
+
+    # fill row 0 and column 0 with insertion and deletion costs
+    Array2D_n1_at(d, 0, 0)[0] = 0
+    for i in range(1, len1 + 1):
+        char_i = str_1_get(str1, i)
+        cost = delete_costs[char_i]
+        Array2D_n1_at(d, i, 0)[0] = Array2D_n1_get(d, i - 1, 0) + cost
+    for j in range(1, len2 + 1):
+        char_j = str_1_get(str2, j)
+        cost = insert_costs[char_j]
+        Array2D_n1_at(d, 0, j)[0] = Array2D_n1_get(d, 0, j - 1) + cost
+
+    # fill DP array
+    for i in range(1, len1 + 1):
+        char_i = str_1_get(str1, i)
+
+        db = 0
+        for j in range(1, len2 + 1):
+            char_j = str_1_get(str2, j)
+
+            k = da[char_j]
+            l = db
+            if char_i == char_j:
+                cost = 0
+                db = j
+            else:
+                cost = substitute_costs[char_i, char_j]
+
+            Array2D_n1_at(d, i, j)[0] = min(
+                Array2D_n1_get(d, i - 1, j - 1) + cost,                  # equal/substitute
+                Array2D_n1_get(d, i, j - 1) + insert_costs[char_j],    # insert
+                Array2D_n1_get(d, i - 1, j) + delete_costs[char_i],    # delete
+                Array2D_n1_get(d, k - 1, l - 1) +                        # transpose
+                    col_delete_range_cost(d, k + 1, i - 1) +                      # delete chars in between
+                    transpose_costs[str_1_get(str1, k), str_1_get(str1, i)] +   # transpose chars
+                    row_insert_range_cost(d, l + 1, j - 1)                        # insert chars in between
+            )
+
+        da[char_i] = i
+
+    ret_val = Array2D_n1_get(d, len1, len2)
+    Array2D_del(d)
+    return ret_val
+
+cdef DTYPE_t c_optimal_string_alignment(
+    unsigned char* str1, Py_ssize_t len1,
+    unsigned char* str2, Py_ssize_t len2,
+    DTYPE_t[::1] insert_costs,
+    DTYPE_t[::1] delete_costs,
+    DTYPE_t[:,::1] substitute_costs,
+    DTYPE_t[:,::1] transpose_costs) nogil:
+    """
+    https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance#Optimal_string_alignment_distance
+    """
+    cdef:
+        Py_ssize_t i, j
+        unsigned char char_i, char_j, prev_char_i, prev_char_j
+        DTYPE_t ret_val
+        Array2D d
+
+    Array2D_init(&d, len1 + 1, len2 + 1)
+
+    # fill row 0 and column 0 with insertion and deletion costs
+    Array2D_0_at(d, 0, 0)[0] = 0
+    for i in range(1, len1 + 1):
+        char_i = str_1_get(str1, i)
+        Array2D_0_at(d, i, 0)[0] = Array2D_0_get(d, i - 1, 0) + delete_costs[char_i]
+    for j in range(1, len2 + 1):
+        char_j = str_1_get(str2, j)
+        Array2D_0_at(d, 0, j)[0] = Array2D_0_get(d, 0, j - 1) + insert_costs[char_j]
+
+    # fill DP array
+    for i in range(1, len1 + 1):
+        char_i = str_1_get(str1, i)
+        for j in range(1, len2 + 1):
+            char_j = str_1_get(str2, j)
+            if char_i == char_j:  # match
+                Array2D_0_at(d, i, j)[0] = Array2D_0_get(d, i - 1, j - 1)
+            else:
+                Array2D_0_at(d, i, j)[0] = min(
+                    Array2D_0_get(d, i - 1, j) + delete_costs[char_i],  # deletion
+                    Array2D_0_get(d, i, j - 1) + insert_costs[char_j],  # insertion
+                    Array2D_0_get(d, i - 1, j - 1) + substitute_costs[char_i, char_j]  # substitution
+                )
+
+            if i > 1 and j > 1:
+                prev_char_i = str_1_get(str1, i - 1)
+                prev_char_j = str_1_get(str2, j - 1)
+                if char_i == prev_char_j and prev_char_i == char_j:  # transpose
+                    Array2D_0_at(d, i, j)[0] = min(
+                        Array2D_0_get(d, i, j),
+                        Array2D_0_get(d, i - 2, j - 2) + transpose_costs[prev_char_i, char_i]
+                    )
+
+    ret_val = Array2D_0_get(d, len1, len2)
+    Array2D_del(d)
+    return ret_val
+
+cdef DTYPE_t c_levenshtein(
+    unsigned char* str1, Py_ssize_t len1,
+    unsigned char* str2, Py_ssize_t len2,
+    DTYPE_t[::1] insert_costs,
+    DTYPE_t[::1] delete_costs,
+    DTYPE_t[:,::1] substitute_costs) nogil:
+    """
+    https://en.wikipedia.org/wiki/Wagner%E2%80%93Fischer_algorithm
+    """
+    cdef:
+        Py_ssize_t i, j
+        unsigned char char_i, char_j
+        DTYPE_t ret_val
+        Array2D d
+
+    Array2D_init(&d, len1 + 1, len2 + 1)
+
+    Array2D_0_at(d, 0, 0)[0] = 0
+    for i in range(1, len1 + 1):
+        char_i = str_1_get(str1, i)
+        Array2D_0_at(d, i, 0)[0] = Array2D_0_get(d, i - 1, 0) + delete_costs[char_i]
+    for j in range(1, len2 + 1):
+        char_j = str_1_get(str2, j)
+        Array2D_0_at(d, 0, j)[0] = Array2D_0_get(d, 0, j - 1) + insert_costs[char_j]
+
+    for i in range(1, len1 + 1):
+        char_i = str_1_get(str1, i)
+        for j in range(1, len2 + 1):
+            char_j = str_1_get(str2, j)
             if char_i == char_j:  # match
                 Array2D_0_at(d, i, j)[0] = Array2D_0_get(d, i - 1, j - 1)
             else:
