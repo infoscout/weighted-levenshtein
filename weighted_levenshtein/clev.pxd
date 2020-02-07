@@ -7,8 +7,10 @@ cdef enum:
 
 
 cdef DTYPE_t c_damerau_levenshtein_unicode(
-	int[:] str_a,
-	int[:] str_b,
+	unsigned int* word_m,
+	Py_ssize_t len1,
+	unsigned int* word_n,
+	Py_ssize_t len2,
 	DTYPE_t[::1] insert_costs,
 	DTYPE_t[::1] delete_costs,
 	DTYPE_t[:,::1] substitute_costs,
@@ -16,8 +18,10 @@ cdef DTYPE_t c_damerau_levenshtein_unicode(
 
 
 cdef DTYPE_t c_optimal_string_alignment_unicode(
-	int[:] word_m,
-	int[:] word_n,
+	unsigned int* word_m,
+	Py_ssize_t len1,
+	unsigned int* word_n,
+	Py_ssize_t len2,
 	DTYPE_t[::1] insert_costs,
 	DTYPE_t[::1] delete_costs,
 	DTYPE_t[:,::1] substitute_costs,
@@ -25,8 +29,10 @@ cdef DTYPE_t c_optimal_string_alignment_unicode(
 
 
 cdef DTYPE_t c_levenshtein_unicode(
-	int[:] word_m,
-	int[:] word_n,
+	unsigned int* word_m,
+	Py_ssize_t len1,
+	unsigned int* word_n,
+	Py_ssize_t len2,
 	DTYPE_t[::1] insert_costs,
 	DTYPE_t[::1] delete_costs,
 	DTYPE_t[:,::1] substitute_costs) nogil

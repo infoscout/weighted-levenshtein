@@ -132,21 +132,17 @@ cdef inline DTYPE_t row_insert_range_cost(
 
 # End Array2D
 
-def convert_string_to_int_array(char* str):
-    s = str.encode('utf-8').decode('utf-8')
-    intarr = np.empty([len(s), ], dtype=int)
-    for i, c in enumerate(s):
+cdef unsigned int* convert_string_to_int_array(unsigned char* str, Py_ssize_t size):
+    cdef unsigned int* intarr = <unsigned int*> malloc(size * sizeof(unsigned int))
+    for i, c in enumerate(str):
         intarr[i] = ord(c)
     return intarr
 
-cdef inline unsigned char str_1_get(unsigned char* s, Py_ssize_t i) nogil:
-    """
-    Takes an index of a 1-indexed string
-    and returns that character
-    """
-    return s[i - 1]
+cdef void copy_str_to_int_arr(unsigned char* str, Py_ssize_t len, unsigned int* int_arr) nogil:
+    for i in range(len):
+        int_arr[i] = str[i]
 
-cdef inline int int_array_1_get(int[:] s, Py_ssize_t i) nogil:
+cdef inline unsigned int int_array_1_get(unsigned int* s, Py_ssize_t i) nogil:
     """
     Takes an index of a 1-indexed int array
     and returns that number
@@ -192,22 +188,33 @@ def damerau_levenshtein(
     if transpose_costs is None:
         transpose_costs = unit_matrix
 
-    intarr1 = convert_string_to_int_array(str1)
-    intarr2 = convert_string_to_int_array(str2)
+    s1 = str1.encode('utf-8').decode('utf-8')
+    len1 = len(s1)
+    intarr1 = convert_string_to_int_array(str1, len1)
 
-    return c_damerau_levenshtein_unicode(
-        intarr1, intarr2,
-        insert_costs,
-        delete_costs,
-        substitute_costs,
-        transpose_costs
-    )
+    s2 = str2.encode('utf-8').decode('utf-8')
+    len2 = len(s2)
+    intarr2 = convert_string_to_int_array(str2, len2)
+
+    cdef DTYPE_t result = c_damerau_levenshtein_unicode(
+                                intarr1, len1,
+                                intarr2, len2,
+                                insert_costs,
+                                delete_costs,
+                                substitute_costs,
+                                transpose_costs
+                            )
+
+    free(intarr1)
+    free(intarr2)
+    return result
 
 dam_lev = damerau_levenshtein
 
 
 cdef DTYPE_t c_damerau_levenshtein_unicode(
-    int[:] str1, int[:] str2,
+    unsigned int* str1, Py_ssize_t len1,
+    unsigned int* str2, Py_ssize_t len2,
     DTYPE_t[::1] insert_costs,
     DTYPE_t[::1] delete_costs,
     DTYPE_t[:,::1] substitute_costs,
@@ -223,15 +230,11 @@ cdef DTYPE_t c_damerau_levenshtein_unicode(
         DTYPE_t cost, ret_val
         Py_ssize_t db, k, l
         Array2D d
-        Py_ssize_t len1, len2
 
         DTYPE_t substitute_cost
         DTYPE_t insert_cost
         DTYPE_t delete_cost
         DTYPE_t transpose_cost
-
-    len1 = str1.shape[0]
-    len2 = str2.shape[0]
 
     Array2D_init(&d, len1 + 2, len2 + 2)
 
@@ -336,22 +339,33 @@ def optimal_string_alignment(
     if transpose_costs is None:
         transpose_costs = unit_matrix
 
-    intarr1 = convert_string_to_int_array(str1)
-    intarr2 = convert_string_to_int_array(str2)
+    s1 = str1.encode('utf-8').decode('utf-8')
+    len1 = len(s1)
+    intarr1 = convert_string_to_int_array(str1, len1)
 
-    return c_optimal_string_alignment_unicode(
-        intarr1, intarr2,
-        insert_costs,
-        delete_costs,
-        substitute_costs,
-        transpose_costs
-    )
+    s2 = str2.encode('utf-8').decode('utf-8')
+    len2 = len(s2)
+    intarr2 = convert_string_to_int_array(str2, len2)
+
+    cdef DTYPE_t result = c_optimal_string_alignment_unicode(
+                                intarr1, len1,
+                                intarr2, len2,
+                                insert_costs,
+                                delete_costs,
+                                substitute_costs,
+                                transpose_costs
+                            )
+
+    free(intarr1)
+    free(intarr2)
+    return result
 
 osa = optimal_string_alignment
 
 
 cdef DTYPE_t c_optimal_string_alignment_unicode(
-    int[:] str1, int[:] str2,
+    unsigned int* str1, Py_ssize_t len1,
+    unsigned int* str2, Py_ssize_t len2,
     DTYPE_t[::1] insert_costs,
     DTYPE_t[::1] delete_costs,
     DTYPE_t[:,::1] substitute_costs,
@@ -364,10 +378,6 @@ cdef DTYPE_t c_optimal_string_alignment_unicode(
         unsigned int char_i, char_j, prev_char_i, prev_char_j
         DTYPE_t ret_val
         Array2D d
-        Py_ssize_t len1, len2
-
-    len1 = str1.shape[0]
-    len2 = str2.shape[0]
 
     Array2D_init(&d, len1 + 1, len2 + 1)
 
@@ -439,21 +449,33 @@ def levenshtein(
     if substitute_costs is None:
         substitute_costs = unit_matrix
 
-    intarr1 = convert_string_to_int_array(str1)
-    intarr2 = convert_string_to_int_array(str2)
+    s1 = str1.encode('utf-8').decode('utf-8')
+    len1 = len(s1)
+    intarr1 = convert_string_to_int_array(str1, len1)
 
-    return c_levenshtein_unicode(
-        intarr1, intarr2,
-        insert_costs,
-        delete_costs,
-        substitute_costs
-    )
+    s2 = str2.encode('utf-8').decode('utf-8')
+    len2 = len(s2)
+    intarr2 = convert_string_to_int_array(str2, len2)
+
+    cdef DTYPE_t result =  c_levenshtein_unicode(
+                                intarr1, len1,
+                                intarr2, len2,
+                                insert_costs,
+                                delete_costs,
+                                substitute_costs
+                            )
+
+    free(intarr1)
+    free(intarr2)
+    return result
+
 
 lev = levenshtein
 
 
 cdef DTYPE_t c_levenshtein_unicode(
-    int[:] str1, int[:] str2,
+    unsigned int* str1, Py_ssize_t len1,
+    unsigned int* str2, Py_ssize_t len2,
     DTYPE_t[::1] insert_costs,
     DTYPE_t[::1] delete_costs,
     DTYPE_t[:,::1] substitute_costs) nogil:
@@ -465,10 +487,6 @@ cdef DTYPE_t c_levenshtein_unicode(
         unsigned int char_i, char_j
         DTYPE_t ret_val
         Array2D d
-        Py_ssize_t len1, len2
-
-    len1 = str1.shape[0]
-    len2 = str2.shape[0]
 
     Array2D_init(&d, len1 + 1, len2 + 1)
 
@@ -506,74 +524,19 @@ cdef DTYPE_t c_damerau_levenshtein(
     DTYPE_t[::1] delete_costs,
     DTYPE_t[:,::1] substitute_costs,
     DTYPE_t[:,::1] transpose_costs) nogil:
-    """
-    https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance#Distance_with_adjacent_transpositions
-    """
-    cdef:
-        Py_ssize_t[ALPHABET_SIZE] da
 
-        Py_ssize_t i, j
-        unsigned char char_i, char_j
-        DTYPE_t cost, ret_val
-        Py_ssize_t db, k, l
+    cdef unsigned int* int_arr1 = <unsigned int*> malloc(len1 * sizeof(unsigned int))
+    copy_str_to_int_arr(str1, len1, int_arr1)
+    cdef unsigned int* int_arr2 = <unsigned int*> malloc(len2 * sizeof(unsigned int))
+    copy_str_to_int_arr(str2, len2, int_arr2)
 
-        Array2D d
+    cdef DTYPE_t result = c_damerau_levenshtein_unicode(int_arr1, len1, int_arr2, len2,
+                                                        insert_costs, delete_costs, substitute_costs, transpose_costs)
 
-    Array2D_init(&d, len1 + 2, len2 + 2)
+    free(int_arr1)
+    free(int_arr2)
+    return result
 
-    # initialize 'da' to all 0
-    for i in range(ALPHABET_SIZE):
-        da[i] = 0
-
-    # fill row (-1) and column (-1) with 'DTYPE_MAX'
-    Array2D_n1_at(d, -1, -1)[0] = DTYPE_MAX
-    for i in range(0, len1 + 1):
-        Array2D_n1_at(d, i, -1)[0] = DTYPE_MAX
-    for j in range(0, len2 + 1):
-        Array2D_n1_at(d, -1, j)[0] = DTYPE_MAX
-
-    # fill row 0 and column 0 with insertion and deletion costs
-    Array2D_n1_at(d, 0, 0)[0] = 0
-    for i in range(1, len1 + 1):
-        char_i = str_1_get(str1, i)
-        cost = delete_costs[char_i]
-        Array2D_n1_at(d, i, 0)[0] = Array2D_n1_get(d, i - 1, 0) + cost
-    for j in range(1, len2 + 1):
-        char_j = str_1_get(str2, j)
-        cost = insert_costs[char_j]
-        Array2D_n1_at(d, 0, j)[0] = Array2D_n1_get(d, 0, j - 1) + cost
-
-    # fill DP array
-    for i in range(1, len1 + 1):
-        char_i = str_1_get(str1, i)
-
-        db = 0
-        for j in range(1, len2 + 1):
-            char_j = str_1_get(str2, j)
-
-            k = da[char_j]
-            l = db
-            if char_i == char_j:
-                cost = 0
-                db = j
-            else:
-                cost = substitute_costs[char_i, char_j]
-
-            Array2D_n1_at(d, i, j)[0] = min(
-                Array2D_n1_get(d, i - 1, j - 1) + cost,                  # equal/substitute
-                Array2D_n1_get(d, i, j - 1) + insert_costs[char_j],    # insert
-                Array2D_n1_get(d, i - 1, j) + delete_costs[char_i],    # delete
-                Array2D_n1_get(d, k - 1, l - 1) +                        # transpose
-                    col_delete_range_cost(d, k + 1, i - 1) +                      # delete chars in between
-                    transpose_costs[str_1_get(str1, k), str_1_get(str1, i)] +   # transpose chars
-                    row_insert_range_cost(d, l + 1, j - 1)                        # insert chars in between
-            )
-
-        da[char_i] = i
-
-    ret_val = Array2D_n1_get(d, len1, len2)
-    Array2D_del(d)
-    return ret_val
 
 cdef DTYPE_t c_optimal_string_alignment(
     unsigned char* str1, Py_ssize_t len1,
@@ -582,52 +545,18 @@ cdef DTYPE_t c_optimal_string_alignment(
     DTYPE_t[::1] delete_costs,
     DTYPE_t[:,::1] substitute_costs,
     DTYPE_t[:,::1] transpose_costs) nogil:
-    """
-    https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance#Optimal_string_alignment_distance
-    """
-    cdef:
-        Py_ssize_t i, j
-        unsigned char char_i, char_j, prev_char_i, prev_char_j
-        DTYPE_t ret_val
-        Array2D d
 
-    Array2D_init(&d, len1 + 1, len2 + 1)
+    cdef unsigned int* int_arr1 = <unsigned int*> malloc(len1 * sizeof(unsigned int))
+    copy_str_to_int_arr(str1, len1, int_arr1)
+    cdef unsigned int* int_arr2 = <unsigned int*> malloc(len2 * sizeof(unsigned int))
+    copy_str_to_int_arr(str2, len2, int_arr2)
 
-    # fill row 0 and column 0 with insertion and deletion costs
-    Array2D_0_at(d, 0, 0)[0] = 0
-    for i in range(1, len1 + 1):
-        char_i = str_1_get(str1, i)
-        Array2D_0_at(d, i, 0)[0] = Array2D_0_get(d, i - 1, 0) + delete_costs[char_i]
-    for j in range(1, len2 + 1):
-        char_j = str_1_get(str2, j)
-        Array2D_0_at(d, 0, j)[0] = Array2D_0_get(d, 0, j - 1) + insert_costs[char_j]
+    cdef DTYPE_t result = c_optimal_string_alignment_unicode(int_arr1, len1, int_arr2, len2,
+                                                             insert_costs, delete_costs, substitute_costs, transpose_costs)
 
-    # fill DP array
-    for i in range(1, len1 + 1):
-        char_i = str_1_get(str1, i)
-        for j in range(1, len2 + 1):
-            char_j = str_1_get(str2, j)
-            if char_i == char_j:  # match
-                Array2D_0_at(d, i, j)[0] = Array2D_0_get(d, i - 1, j - 1)
-            else:
-                Array2D_0_at(d, i, j)[0] = min(
-                    Array2D_0_get(d, i - 1, j) + delete_costs[char_i],  # deletion
-                    Array2D_0_get(d, i, j - 1) + insert_costs[char_j],  # insertion
-                    Array2D_0_get(d, i - 1, j - 1) + substitute_costs[char_i, char_j]  # substitution
-                )
-
-            if i > 1 and j > 1:
-                prev_char_i = str_1_get(str1, i - 1)
-                prev_char_j = str_1_get(str2, j - 1)
-                if char_i == prev_char_j and prev_char_i == char_j:  # transpose
-                    Array2D_0_at(d, i, j)[0] = min(
-                        Array2D_0_get(d, i, j),
-                        Array2D_0_get(d, i - 2, j - 2) + transpose_costs[prev_char_i, char_i]
-                    )
-
-    ret_val = Array2D_0_get(d, len1, len2)
-    Array2D_del(d)
-    return ret_val
+    free(int_arr1)
+    free(int_arr2)
+    return result
 
 cdef DTYPE_t c_levenshtein(
     unsigned char* str1, Py_ssize_t len1,
@@ -635,38 +564,15 @@ cdef DTYPE_t c_levenshtein(
     DTYPE_t[::1] insert_costs,
     DTYPE_t[::1] delete_costs,
     DTYPE_t[:,::1] substitute_costs) nogil:
-    """
-    https://en.wikipedia.org/wiki/Wagner%E2%80%93Fischer_algorithm
-    """
-    cdef:
-        Py_ssize_t i, j
-        unsigned char char_i, char_j
-        DTYPE_t ret_val
-        Array2D d
 
-    Array2D_init(&d, len1 + 1, len2 + 1)
+    cdef unsigned int* int_arr1 = <unsigned int*> malloc(len1 * sizeof(unsigned int))
+    copy_str_to_int_arr(str1, len1, int_arr1)
+    cdef unsigned int* int_arr2 = <unsigned int*> malloc(len2 * sizeof(unsigned int))
+    copy_str_to_int_arr(str2, len2, int_arr2)
 
-    Array2D_0_at(d, 0, 0)[0] = 0
-    for i in range(1, len1 + 1):
-        char_i = str_1_get(str1, i)
-        Array2D_0_at(d, i, 0)[0] = Array2D_0_get(d, i - 1, 0) + delete_costs[char_i]
-    for j in range(1, len2 + 1):
-        char_j = str_1_get(str2, j)
-        Array2D_0_at(d, 0, j)[0] = Array2D_0_get(d, 0, j - 1) + insert_costs[char_j]
+    cdef DTYPE_t result = c_levenshtein_unicode(int_arr1, len1, int_arr2, len2,
+                                                insert_costs, delete_costs, substitute_costs)
 
-    for i in range(1, len1 + 1):
-        char_i = str_1_get(str1, i)
-        for j in range(1, len2 + 1):
-            char_j = str_1_get(str2, j)
-            if char_i == char_j:  # match
-                Array2D_0_at(d, i, j)[0] = Array2D_0_get(d, i - 1, j - 1)
-            else:
-                Array2D_0_at(d, i, j)[0] = min(
-                    Array2D_0_get(d, i - 1, j) + delete_costs[char_i],
-                    Array2D_0_get(d, i, j - 1) + insert_costs[char_j],
-                    Array2D_0_get(d, i - 1, j - 1) + substitute_costs[char_i, char_j]
-                )
-
-    ret_val = Array2D_0_get(d, len1, len2)
-    Array2D_del(d)
-    return ret_val
+    free(int_arr1)
+    free(int_arr2)
+    return result
