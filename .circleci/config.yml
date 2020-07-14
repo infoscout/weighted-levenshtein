@@ -24,7 +24,7 @@ jobs:
           name: Send coverage results to Coveralls
           command: | 
             source venv/bin/activate
-            coveralls
+            COVERALLS_REPO_TOKEN=Wg14A2NUbPaB80MphwALo4zAzzrnrKe5Z coveralls
   test-py27:
     <<: *test-template
     docker:
