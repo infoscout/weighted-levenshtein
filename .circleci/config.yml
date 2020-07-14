@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 jobs:
   test-py36: &test-template
     docker:
@@ -29,7 +29,6 @@ jobs:
     docker:
       - image: circleci/python:2.7
 workflows:
-  version: 2
   test:
     jobs:
       - test-py36
