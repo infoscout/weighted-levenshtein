@@ -14,7 +14,6 @@ jobs:
           command: |
             source venv/bin/activate
             pip install -r requirements.txt
-            #pip install coverage
             pip install coveralls
       - run:
           name: Run tests with coverage
@@ -23,7 +22,9 @@ jobs:
             coverage run setup.py test
       - run:
           name: Send coverage results to Coveralls
-          command: coveralls
+          command: | 
+            source venv/bin/activate
+            coveralls
   test-py27:
     <<: *test-template
     docker:
