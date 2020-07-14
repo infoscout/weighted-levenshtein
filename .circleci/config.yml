@@ -20,7 +20,7 @@ jobs:
           name: Run tests with coverage
           command: |
             source venv/bin/activate
-            coveralls run setup.py test
+            coverage run setup.py test
       - run:
           name: Send coverage results to Coveralls
           command: coveralls
