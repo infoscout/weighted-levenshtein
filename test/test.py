@@ -183,3 +183,61 @@ class TestClevUsingDefaultValues(unittest.TestCase):
         self.assertEqual(dam_lev('bca', 'ab'), 2)
         self.assertEqual(dam_lev('ab', 'bdca'), 3)
         self.assertEqual(dam_lev('bdca', 'ab'), 3)
+
+
+class TestClevWithUnicode(unittest.TestCase):
+
+    def setUp(self):
+        self.iw = np.ones(10001, dtype=np.float64)
+        self.dw = np.ones(10001, dtype=np.float64)
+        self.sw = np.ones((10001, 10001), dtype=np.float64)
+        self.tw = np.ones((10001, 10001), dtype=np.float64)
+        self.iw[ord("á")] = 2.0
+        self.dw[ord("á")] = 2.0
+        self.iw[ord("ő")] = 9.0
+        self.dw[ord("ő")] = 9.0
+        self.iw[ord("Ұ")] = 10.0
+        self.dw[ord("Ұ")] = 10.0
+
+
+    def _lev(self, x, y):
+        return lev(x, y, self.iw, self.dw, self.sw)
+
+    def _osa(self, x, y):
+        return osa(x, y, self.iw, self.dw, self.sw, self.tw)
+
+    def _dl(self, x, y):
+        return dam_lev(x, y, self.iw, self.dw, self.sw, self.tw)
+
+    def test_lev(self):
+        try:
+            self.assertEqual(self._lev('átívelődök', 'átívelődök'), 0.0)
+            self.assertEqual(self._lev('', 'átívelődök'), 19.0)
+            self.assertEqual(self._lev('átívelődök', ''), 19.0)
+            self.assertEqual(self._lev('', ''), 0.0)
+            self.assertEqual(self._lev('átívelődök', 'átívelőd'), 2.0)
+            self.assertEqual(self._lev('', 'ҰǴʚΏ¤☣✐'), 16.0)
+        except UnicodeEncodeError:
+            self.fail("Could not handle special characters")
+
+    def test_osa(self):
+        try:
+            self.assertEqual(self._osa('átívelődök', 'átívelődök'), 0.0)
+            self.assertEqual(self._osa('', 'átívelődök'), 19.0)
+            self.assertEqual(self._osa('átívelődök', ''), 19.0)
+            self.assertEqual(self._osa('', ''), 0.0)
+            self.assertEqual(self._osa('átívelődök', 'átívelőd'), 2.0)
+            self.assertEqual(self._osa('', 'ҰǴʚΏ¤☣✐'), 16.0)
+        except UnicodeEncodeError:
+            self.fail("Could not handle special characters")
+
+    def test_dl(self):
+        try:
+            self.assertEqual(self._dl('átívelődök', 'átívelődök'), 0.0)
+            self.assertEqual(self._dl('', 'átívelődök'), 19.0)
+            self.assertEqual(self._dl('átívelődök', ''), 19.0)
+            self.assertEqual(self._dl('', ''), 0.0)
+            self.assertEqual(self._dl('átívelődök', 'átívelőd'), 2.0)
+            self.assertEqual(self._dl('', 'ҰǴʚΏ¤☣✐'), 16.0)
+        except UnicodeEncodeError:
+            self.fail("Could not handle special characters")
