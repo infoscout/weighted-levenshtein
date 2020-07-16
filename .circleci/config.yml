@@ -14,7 +14,7 @@ jobs:
           command: |
             source venv/bin/activate
             pip install -r requirements.txt
-            pip install coverage coveralls
+            pip install coveralls
       - run:
           name: Run tests with coverage
           command: |
