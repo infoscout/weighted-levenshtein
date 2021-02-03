@@ -179,12 +179,12 @@ def damerau_levenshtein(
     if transpose_costs is None:
         transpose_costs = unit_matrix
 
-    s1 = str(str1).encode()  
-    s2 = str(str2).encode()  
+    # s1 = str(str1).encode()
+    # s2 = str(str2).encode()
 
     return c_damerau_levenshtein(
-        s1, len(s1),
-        s2, len(s2),
+        str1, len(str1),
+        str2, len(str2),
         insert_costs,
         delete_costs,
         substitute_costs,
