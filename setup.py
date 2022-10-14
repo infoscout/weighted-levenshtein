@@ -37,10 +37,5 @@ setup(
     package_data={
         'weighted_levenshtein': ['clev.pxd', 'clev.pyx'],
     },
-    setup_requires=[
-        # Setuptools 18.0 properly handles Cython extensions.
-        'setuptools >= 18.0',
-        'cython',
-    ],
     ext_modules=[Extension("weighted_levenshtein.clev", ['weighted_levenshtein/clev.pyx'])],
 )
