@@ -8,7 +8,7 @@ with open('README.rst') as readme:
 
 setup(
     name='weighted_levenshtein',
-    version='0.2.1',
+    version='0.2.2',
     description=(
         'Library providing functions to calculate Levenshtein distance, Optimal String Alignment distance, '
         'and Damerau-Levenshtein distance, where the cost of each operation can be weighted by letter.'
@@ -37,10 +37,5 @@ setup(
     package_data={
         'weighted_levenshtein': ['clev.pxd', 'clev.pyx'],
     },
-    setup_requires=[
-        # Setuptools 18.0 properly handles Cython extensions.
-        'setuptools >= 18.0',
-        'cython',
-    ],
     ext_modules=[Extension("weighted_levenshtein.clev", ['weighted_levenshtein/clev.pyx'])],
 )
