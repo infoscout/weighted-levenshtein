@@ -29,6 +29,8 @@ jobs:
     <<: *test-template
     docker:
       - image: circleci/python:2.7
+
+# trial
 workflows:
   test:
     jobs:
