@@ -3,6 +3,7 @@
 # distutils: define_macros=CYTHON_TRACE_NOGIL=1
 
 from libc.stdlib cimport malloc, free
+from libc.math cimport fabs
 from cython.view cimport array as cvarray
 from .clev cimport DTYPE_t, DTYPE_MAX, ALPHABET_SIZE
 
@@ -25,6 +26,11 @@ ctypedef struct Array2D:
     DTYPE_t* mem
     Py_ssize_t num_rows
     Py_ssize_t num_cols
+
+cdef inline bint dtype_almost_equal(
+    DTYPE_t lhs,
+    DTYPE_t rhs) nogil:
+    return fabs(lhs - rhs) < 1e-9
 
 
 cdef inline void Array2D_init(
@@ -149,7 +155,8 @@ def damerau_levenshtein(
     DTYPE_t[::1] insert_costs=None,
     DTYPE_t[::1] delete_costs=None,
     DTYPE_t[:,::1] substitute_costs=None,
-    DTYPE_t[:,::1] transpose_costs=None):
+    DTYPE_t[:,::1] transpose_costs=None,
+    DTYPE_t score_cutoff=DTYPE_MAX):
     """
     Calculates the Damerau-Levenshtein distance between str1 and str2,
     provided the costs of inserting, deleting, substituting, and transposing characters.
@@ -188,7 +195,8 @@ def damerau_levenshtein(
         insert_costs,
         delete_costs,
         substitute_costs,
-        transpose_costs
+        transpose_costs,
+        score_cutoff
     )
 
 dam_lev = damerau_levenshtein
@@ -200,7 +208,8 @@ cdef DTYPE_t c_damerau_levenshtein(
     DTYPE_t[::1] insert_costs,
     DTYPE_t[::1] delete_costs,
     DTYPE_t[:,::1] substitute_costs,
-    DTYPE_t[:,::1] transpose_costs) nogil:
+    DTYPE_t[:,::1] transpose_costs,
+    DTYPE_t score_cutoff) nogil:
     """
     https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance#Distance_with_adjacent_transpositions
     """
@@ -209,10 +218,13 @@ cdef DTYPE_t c_damerau_levenshtein(
 
         Py_ssize_t i, j
         unsigned char char_i, char_j
-        DTYPE_t cost, ret_val
+        DTYPE_t cost, ret_val, row_min
         Py_ssize_t db, k, l
 
         Array2D d
+
+    if score_cutoff <= 0:
+        return score_cutoff
 
     Array2D_init(&d, len1 + 2, len2 + 2)
 
@@ -233,6 +245,7 @@ cdef DTYPE_t c_damerau_levenshtein(
         char_i = str_1_get(str1, i)
         cost = delete_costs[char_i]
         Array2D_n1_at(d, i, 0)[0] = Array2D_n1_get(d, i - 1, 0) + cost
+
     for j in range(1, len2 + 1):
         char_j = str_1_get(str2, j)
         cost = insert_costs[char_j]
@@ -243,6 +256,7 @@ cdef DTYPE_t c_damerau_levenshtein(
         char_i = str_1_get(str1, i)
 
         db = 0
+        row_min = Array2D_n1_get(d, i, 0)
         for j in range(1, len2 + 1):
             char_j = str_1_get(str2, j)
 
@@ -264,11 +278,17 @@ cdef DTYPE_t c_damerau_levenshtein(
                     row_insert_range_cost(d, l + 1, j - 1)                        # insert chars in between
             )
 
+            row_min = min(row_min, Array2D_n1_get(d, i, j))
+
+        if dtype_almost_equal(row_min, score_cutoff):
+            Array2D_del(d)
+            return score_cutoff
+
         da[char_i] = i
 
     ret_val = Array2D_n1_get(d, len1, len2)
     Array2D_del(d)
-    return ret_val
+    return min(ret_val, score_cutoff)
 
 
 def optimal_string_alignment(
@@ -277,7 +297,8 @@ def optimal_string_alignment(
     DTYPE_t[::1] insert_costs=None,
     DTYPE_t[::1] delete_costs=None,
     DTYPE_t[:,::1] substitute_costs=None,
-    DTYPE_t[:,::1] transpose_costs=None):
+    DTYPE_t[:,::1] transpose_costs=None,
+    DTYPE_t score_cutoff=DTYPE_MAX):
     """
     Calculates the Optimal String Alignment distance between str1 and str2,
     provided the costs of inserting, deleting, and substituting characters.
@@ -316,7 +337,8 @@ def optimal_string_alignment(
         insert_costs,
         delete_costs,
         substitute_costs,
-        transpose_costs
+        transpose_costs,
+        score_cutoff
     )
 
 osa = optimal_string_alignment
@@ -328,15 +350,19 @@ cdef DTYPE_t c_optimal_string_alignment(
     DTYPE_t[::1] insert_costs,
     DTYPE_t[::1] delete_costs,
     DTYPE_t[:,::1] substitute_costs,
-    DTYPE_t[:,::1] transpose_costs) nogil:
+    DTYPE_t[:,::1] transpose_costs,
+    DTYPE_t score_cutoff) nogil:
     """
     https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance#Optimal_string_alignment_distance
     """
     cdef:
         Py_ssize_t i, j
         unsigned char char_i, char_j, prev_char_i, prev_char_j
-        DTYPE_t ret_val
+        DTYPE_t ret_val, row_min
         Array2D d
+
+    if score_cutoff <= 0:
+        return score_cutoff
 
     Array2D_init(&d, len1 + 1, len2 + 1)
 
@@ -345,6 +371,7 @@ cdef DTYPE_t c_optimal_string_alignment(
     for i in range(1, len1 + 1):
         char_i = str_1_get(str1, i)
         Array2D_0_at(d, i, 0)[0] = Array2D_0_get(d, i - 1, 0) + delete_costs[char_i]
+
     for j in range(1, len2 + 1):
         char_j = str_1_get(str2, j)
         Array2D_0_at(d, 0, j)[0] = Array2D_0_get(d, 0, j - 1) + insert_costs[char_j]
@@ -352,6 +379,7 @@ cdef DTYPE_t c_optimal_string_alignment(
     # fill DP array
     for i in range(1, len1 + 1):
         char_i = str_1_get(str1, i)
+        row_min = Array2D_0_get(d, i, 0)
         for j in range(1, len2 + 1):
             char_j = str_1_get(str2, j)
             if char_i == char_j:  # match
@@ -371,10 +399,16 @@ cdef DTYPE_t c_optimal_string_alignment(
                         Array2D_0_get(d, i, j),
                         Array2D_0_get(d, i - 2, j - 2) + transpose_costs[prev_char_i, char_i]
                     )
+            
+            row_min = min(row_min, Array2D_0_get(d, i, j))
+        
+        if dtype_almost_equal(row_min, score_cutoff):
+            Array2D_del(d)
+            return score_cutoff
 
     ret_val = Array2D_0_get(d, len1, len2)
     Array2D_del(d)
-    return ret_val
+    return min(ret_val, score_cutoff)
 
 
 def levenshtein(
@@ -382,7 +416,8 @@ def levenshtein(
     unsigned char* str2,
     DTYPE_t[::1] insert_costs=None,
     DTYPE_t[::1] delete_costs=None,
-    DTYPE_t[:,::1] substitute_costs=None):
+    DTYPE_t[:,::1] substitute_costs=None,
+    DTYPE_t score_cutoff=DTYPE_MAX):
     """
     Calculates the Levenshtein distance between str1 and str2,
     provided the costs of inserting, deleting, and substituting characters.
@@ -416,7 +451,8 @@ def levenshtein(
         s2, len(s2),
         insert_costs,
         delete_costs,
-        substitute_costs
+        substitute_costs,
+        score_cutoff
     )
 
 lev = levenshtein
@@ -427,15 +463,19 @@ cdef DTYPE_t c_levenshtein(
     unsigned char* str2, Py_ssize_t len2,
     DTYPE_t[::1] insert_costs,
     DTYPE_t[::1] delete_costs,
-    DTYPE_t[:,::1] substitute_costs) nogil:
+    DTYPE_t[:,::1] substitute_costs,
+    DTYPE_t score_cutoff) nogil:
     """
     https://en.wikipedia.org/wiki/Wagner%E2%80%93Fischer_algorithm
     """
     cdef:
         Py_ssize_t i, j
         unsigned char char_i, char_j
-        DTYPE_t ret_val
+        DTYPE_t ret_val, row_min
         Array2D d
+
+    if score_cutoff <= 0:
+        return score_cutoff
 
     Array2D_init(&d, len1 + 1, len2 + 1)
 
@@ -443,12 +483,14 @@ cdef DTYPE_t c_levenshtein(
     for i in range(1, len1 + 1):
         char_i = str_1_get(str1, i)
         Array2D_0_at(d, i, 0)[0] = Array2D_0_get(d, i - 1, 0) + delete_costs[char_i]
+
     for j in range(1, len2 + 1):
         char_j = str_1_get(str2, j)
         Array2D_0_at(d, 0, j)[0] = Array2D_0_get(d, 0, j - 1) + insert_costs[char_j]
 
     for i in range(1, len1 + 1):
         char_i = str_1_get(str1, i)
+        row_min = Array2D_0_get(d, i, 0)
         for j in range(1, len2 + 1):
             char_j = str_1_get(str2, j)
             if char_i == char_j:  # match
@@ -460,6 +502,12 @@ cdef DTYPE_t c_levenshtein(
                     Array2D_0_get(d, i - 1, j - 1) + substitute_costs[char_i, char_j]
                 )
 
+            row_min = min(row_min, Array2D_0_get(d, i, j))
+
+        if dtype_almost_equal(row_min, score_cutoff):
+            Array2D_del(d)
+            return score_cutoff
+
     ret_val = Array2D_0_get(d, len1, len2)
     Array2D_del(d)
-    return ret_val
+    return min(ret_val, score_cutoff)
