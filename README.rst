@@ -18,11 +18,13 @@ New logic usage example
 -------------
 
 .. code:: python
+
     from weighted_levenshtein import lev
 
     print(lev('WILLNOTCUT', 'WILLNOTCUT123', score_cutoff=4))  # prints '3'
 
     print(lev('WILLCUT', 'YESITWILLCUT', score_cutoff=4))  # prints '4', because distance certainly will be greater than 4
+
 
 Use Cases
 ---------
