@@ -7,6 +7,25 @@ weighted-levenshtein
 .. image:: https://coveralls.io/repos/github/infoscout/weighted-levenshtein/badge.svg?branch=master
     :target: https://coveralls.io/github/infoscout/weighted-levenshtein?branch=master
 
+Fork changes
+---------
+
+This fork adds score_cutoff parameter to every distance function, allowing for early stopping of distance calculation.
+
+If score_cutoff is provided, and the distance is gaurenteed to be greater or equal to score_cutoff, the distance calculation is stopped and score_cutoff is returned.
+
+New logic usage example
+-------------
+
+.. code:: python
+
+    from weighted_levenshtein import lev
+
+    print(lev('WILLNOTCUT', 'WILLNOTCUT123', score_cutoff=4))  # prints '3'
+
+    print(lev('WILLCUT', 'YESITWILLCUT', score_cutoff=4))  # prints '4', because distance certainly will be greater than 4
+
+
 Use Cases
 ---------
 

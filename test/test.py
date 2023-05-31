@@ -15,14 +15,14 @@ class TestClev(unittest.TestCase):
         self.sw = np.ones((128, 128), dtype=np.float64)
         self.tw = np.ones((128, 128), dtype=np.float64)
 
-    def _lev(self, x, y):
-        return lev(x, y, self.iw, self.dw, self.sw)
+    def _lev(self, x, y, sc=float('inf')):
+        return lev(x, y, self.iw, self.dw, self.sw, sc)
 
-    def _osa(self, x, y):
-        return osa(x, y, self.iw, self.dw, self.sw, self.tw)
+    def _osa(self, x, y, sc=float('inf')):
+        return osa(x, y, self.iw, self.dw, self.sw, self.tw, sc)
 
-    def _dl(self, x, y):
-        return dam_lev(x, y, self.iw, self.dw, self.sw, self.tw)
+    def _dl(self, x, y, sc=float('inf')):
+        return dam_lev(x, y, self.iw, self.dw, self.sw, self.tw, sc)
 
     def test_lev(self):
         self.assertEqual(self._lev('1234', '1234'), 0.0)
@@ -151,6 +151,36 @@ class TestClev(unittest.TestCase):
         self.assertEqual(self._dl('ab', 'bca'), 2)
         self.assertEqual(self._dl('bca', 'ab'), 2.5)
 
+    def test_lev_cutoff(self):
+        self.assertEqual(self._lev('1234', '1234', 1.0), 0.0)
+        self.assertEqual(self._lev('', '1234', 2.0), 2.0)
+        self.assertEqual(self._lev('1234', '', 2.0), 2.0)
+        self.assertEqual(self._lev('', '', 1.0), 0.0)
+        self.assertEqual(self._lev('1234', '12', 3.0), 2.0)
+        self.assertEqual(self._lev('1234', '14', 1.5), 1.5)
+        self.assertEqual(self._lev('1111', '1', 2.5), 2.5)
+
+    def test_osa_cutoff(self):
+        self.assertEqual(self._osa('1234', '1234', 1.0), 0.0)
+        self.assertEqual(self._osa('', '1234', 2.0), 2.0)
+        self.assertEqual(self._osa('1234', '', 2.0), 2.0)
+        self.assertEqual(self._osa('', '', 0.5), 0.0)
+        self.assertEqual(self._osa('1234', '12', 2.5), 2.0)
+        self.assertEqual(self._osa('1234', '14', 1.5), 1.5)
+        self.assertEqual(self._osa('1111', '1', 2.0), 2.0)
+
+    def test_dl_cutoff(self):
+        self.assertEqual(self._dl('', '', 1), 0)
+        self.assertEqual(self._dl('', 'a', 2), 1)
+        self.assertEqual(self._dl('a', '', 2), 1)
+        self.assertEqual(self._dl('a', 'b', 0.5), 0.5)
+        self.assertEqual(self._dl('a', 'ab', 0.5), 0.5)
+        self.assertEqual(self._dl('ab', 'ba', 1.5), 1)
+        self.assertEqual(self._dl('ab', 'bca', 1.5), 1.5)
+        self.assertEqual(self._dl('bca', 'ab', 3.0), 2)
+        self.assertEqual(self._dl('ab', 'bdca', 2.5), 2.5)
+        self.assertEqual(self._dl('bdca', 'ab', 3.5), 3)
+
 
 class TestClevUsingDefaultValues(unittest.TestCase):
 
@@ -183,3 +213,45 @@ class TestClevUsingDefaultValues(unittest.TestCase):
         self.assertEqual(dam_lev('bca', 'ab'), 2)
         self.assertEqual(dam_lev('ab', 'bdca'), 3)
         self.assertEqual(dam_lev('bdca', 'ab'), 3)
+
+
+class TestClevUsingNonPositiveCutoff(unittest.TestCase):
+
+    def test_cutoff(self):
+        self.assertEqual(lev('1234', '1234', score_cutoff=0), 0.0)
+        self.assertEqual(lev('1234', '123', score_cutoff=0), 0.0)
+        self.assertEqual(lev('', '1234', score_cutoff=-1.0), -1.0)
+        self.assertEqual(osa('1234', '1234', score_cutoff=0), 0.0)
+        self.assertEqual(osa('1234', '123', score_cutoff=0), 0.0)
+        self.assertEqual(osa('1234', '1234', score_cutoff=-1.0), -1.0)
+        self.assertEqual(dam_lev('', '', score_cutoff=0.0), 0.0)
+        self.assertEqual(dam_lev('a', '', score_cutoff=0.0), 0.0)
+        self.assertEqual(dam_lev('', 'a', score_cutoff=-1.0), -1.0)
+
+
+class TestClevFasterWithCutoff(unittest.TestCase):
+
+    def test_lev_performance(self):
+        import time
+
+        iterations = 100
+
+        str1 = 'asdlajhfsdfjlsd' * 100
+        str2 = 'uxcmtrocvbihirt' * 100
+
+        start_time = time.time()
+
+        for _ in range(iterations):
+            lev(str1, str2, score_cutoff=5.0)
+
+        time_with_cutoff = time.time() - start_time
+
+        start_time = time.time()
+
+        for _ in range(iterations):
+            lev(str1, str2)
+        
+        time_without_cutoff = time.time() - start_time
+
+        # At least 10x faster
+        self.assertLess(time_with_cutoff, time_without_cutoff / 10)
