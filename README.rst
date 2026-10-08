@@ -34,6 +34,15 @@ Damerau-Levenshtein distance:
 https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein\_distance#Distance\_with\_adjacent\_transpositions
 
 
+Additional technical reading
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For an explanation of the standard Levenshtein
+distance algorithm, including edit operations
+and its relationship to string matching, see:
+
+https://www.levenshtein.net/
+
 
 Installation
 ------------
@@ -101,14 +110,47 @@ Detailed Documentation
 
 http://weighted-levenshtein.readthedocs.io/
 
+
 Important Notes
 ---------------
 
-- All string lookups are case sensitive.
+- All string comparisons are case sensitive.
 
-- The costs parameters only accept numpy arrays, since the underlying Cython implementation relies on this for fast lookups. The numpy arrays are indexed using the ``ord()`` value of the characters. Thus, only the first 128 ASCII letters are accepted, and ``dict`` and ``list`` are not accepted. Consequently, the strings must be strictly ``str`` objects, not ``unicode``.
+- The edit-cost parameters must be NumPy arrays
+  containing values of type ``np.float64``.
 
-- This library is compatible with both Python 2 and Python 3 (see ``tox.ini`` for tested versions).
+- The current implementation uses character-indexed
+  cost arrays covering 128 ASCII code points
+  (0 through 127).
+
+- ASCII includes letters, digits, punctuation,
+  whitespace, and control characters. It does
+  not include most accented letters, CJK
+  characters, or emoji.
+
+- This implementation should not be treated as
+  a general-purpose Unicode edit-distance library.
+
+- For multilingual applications, Unicode
+  normalization and character segmentation
+  should be considered separately from edit
+  distance calculation.
+
+- Weighted edit costs can produce asymmetric
+  results. For example, the cost of transforming
+  A into B may differ from the cost of
+  transforming B into A.
+
+- Applications using weighted edit distance
+  for metric-based search should verify that
+  their chosen cost model satisfies the required
+  metric properties.
+
+- This library supports Python 2 and Python 3
+  as documented by the project. Consult its
+  tested environments and dependency requirements
+  when selecting a Python version.
+
 
 
 
